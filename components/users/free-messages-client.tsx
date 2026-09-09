@@ -463,21 +463,21 @@ export default function FreeMessagesClient({ userId }: { userId: string }) {
       </Card>
 
       {useTemplate && (
-        <Card className="border-2 border-pink-200 bg-gradient-to-br from-pink-50 to-white">
+        <Card className="border-2 border-emerald-200 bg-gradient-to-br from-emerald-50 to-white">
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-4">
               <Button
                 onClick={fetchTemplates}
                 disabled={loadingTemplates}
-                className="bg-pink-500 hover:bg-pink-600 text-white"
+                className="bg-emerald-500 hover:bg-emerald-600 text-white"
                 size="sm"
               >
                 <RefreshCw className={`w-4 h-4 ml-2 ${loadingTemplates ? "animate-spin" : ""}`} />
                 جلب القوالب
               </Button>
               <div className="flex items-center gap-2">
-                <h2 className="text-xl font-bold text-pink-800">القوالب المعتمدة</h2>
-                <FileText className="h-5 w-5 text-pink-600" />
+                <h2 className="text-xl font-bold text-emerald-800">القوالب المعتمدة</h2>
+                <FileText className="h-5 w-5 text-emerald-600" />
               </div>
             </div>
 
@@ -489,8 +489,8 @@ export default function FreeMessagesClient({ userId }: { userId: string }) {
                     onClick={() => setSelectedTemplate(template)}
                     className={`p-4 rounded-lg border-2 text-right transition-all ${
                       selectedTemplate?.name === template.name
-                        ? "border-pink-500 bg-pink-100 shadow-md"
-                        : "border-gray-200 bg-white hover:border-pink-300 hover:shadow-sm"
+                        ? "border-emerald-500 bg-emerald-100 shadow-md"
+                        : "border-gray-200 bg-white hover:border-emerald-300 hover:shadow-sm"
                     }`}
                   >
                     <div className="flex items-start justify-between gap-2">
@@ -500,7 +500,7 @@ export default function FreeMessagesClient({ userId }: { userId: string }) {
                         <div className="text-xs text-gray-600 mt-2 line-clamp-2">{getTemplatePreview(template)}</div>
                       </div>
                       {selectedTemplate?.name === template.name && (
-                        <CheckCircle2 className="w-5 h-5 text-pink-500 flex-shrink-0" />
+                        <CheckCircle2 className="w-5 h-5 text-emerald-500 flex-shrink-0" />
                       )}
                     </div>
                   </button>
@@ -514,7 +514,7 @@ export default function FreeMessagesClient({ userId }: { userId: string }) {
             )}
 
             {selectedTemplate && (
-              <div className="mt-4 p-4 bg-pink-100 rounded-lg border border-pink-200">
+              <div className="mt-4 p-4 bg-emerald-100 rounded-lg border border-emerald-200">
                 <div className="flex items-center justify-between">
                   <Button
                     variant="ghost"
@@ -525,7 +525,7 @@ export default function FreeMessagesClient({ userId }: { userId: string }) {
                     <X className="h-4 w-4 ml-1" />
                     إلغاء
                   </Button>
-                  <p className="text-sm text-pink-800">
+                  <p className="text-sm text-emerald-800">
                     القالب المختار: <span className="font-bold">{selectedTemplate.name}</span>
                   </p>
                 </div>
@@ -665,15 +665,15 @@ export default function FreeMessagesClient({ userId }: { userId: string }) {
       )}
 
       {/* اختيار رمز الدولة */}
-      <Card className="border-2 border-pink-200 bg-gradient-to-br from-pink-50 to-white">
+      <Card className="border-2 border-emerald-200 bg-gradient-to-br from-emerald-50 to-white">
         <CardContent className="p-6">
           <div className="flex items-center gap-2 mb-4 justify-end">
-            <h2 className="text-xl font-bold text-pink-800">اختيار رمز الدولة</h2>
+            <h2 className="text-xl font-bold text-emerald-800">اختيار رمز الدولة</h2>
           </div>
 
           <button
             onClick={() => setCountryCodeDialogOpen(true)}
-            className="w-full flex items-center justify-between px-4 py-3 border-2 border-pink-200 rounded-lg hover:bg-pink-50 transition-colors"
+            className="w-full flex items-center justify-between px-4 py-3 border-2 border-emerald-200 rounded-lg hover:bg-emerald-50 transition-colors"
           >
             <ChevronDown className="h-5 w-5 text-gray-400" />
             <div className="flex items-center gap-2">
@@ -793,7 +793,7 @@ export default function FreeMessagesClient({ userId }: { userId: string }) {
           (useTemplate ? !selectedTemplate : !messageText.trim()) ||
           (useTemplate && templateHasImage && !selectedMedia)
         }
-        className="w-full h-14 text-lg bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 disabled:opacity-50"
+        className="w-full h-14 text-lg bg-gradient-to-r from-emerald-500 to-purple-600 hover:from-emerald-600 hover:to-purple-700 disabled:opacity-50"
       >
         {sendingStatus === "sending" ? (
           <>
@@ -824,7 +824,7 @@ export default function FreeMessagesClient({ userId }: { userId: string }) {
                   setCountryCodeDialogOpen(false)
                 }}
                 className={`p-4 rounded-lg border-2 text-right transition-all flex items-center justify-between ${
-                  selectedCountry === code ? "border-pink-500 bg-pink-50" : "border-gray-200 hover:border-pink-300"
+                  selectedCountry === code ? "border-emerald-500 bg-emerald-50" : "border-gray-200 hover:border-emerald-300"
                 }`}
               >
                 <span className="text-2xl">{countryFlags[code]}</span>
@@ -847,7 +847,7 @@ export default function FreeMessagesClient({ userId }: { userId: string }) {
           </DialogHeader>
           {loadingMedia ? (
             <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-8 w-8 animate-spin text-pink-500" />
+              <Loader2 className="h-8 w-8 animate-spin text-emerald-500" />
             </div>
           ) : mediaLibrary.length > 0 ? (
             <div className="grid grid-cols-3 sm:grid-cols-4 gap-3 mt-4">
@@ -856,7 +856,7 @@ export default function FreeMessagesClient({ userId }: { userId: string }) {
                   key={media.id}
                   onClick={() => handleMediaSelect(media)}
                   className={`relative aspect-square rounded-lg overflow-hidden border-2 transition-all hover:scale-105 ${
-                    selectedMedia?.id === media.id ? "border-pink-500 ring-2 ring-pink-200" : "border-gray-200"
+                    selectedMedia?.id === media.id ? "border-emerald-500 ring-2 ring-emerald-200" : "border-gray-200"
                   }`}
                 >
                   <img
@@ -865,8 +865,8 @@ export default function FreeMessagesClient({ userId }: { userId: string }) {
                     className="w-full h-full object-cover"
                   />
                   {selectedMedia?.id === media.id && (
-                    <div className="absolute inset-0 bg-pink-500/20 flex items-center justify-center">
-                      <CheckCircle2 className="w-8 h-8 text-pink-500" />
+                    <div className="absolute inset-0 bg-emerald-500/20 flex items-center justify-center">
+                      <CheckCircle2 className="w-8 h-8 text-emerald-500" />
                     </div>
                   )}
                 </button>
@@ -906,7 +906,7 @@ export default function FreeMessagesClient({ userId }: { userId: string }) {
               </div>
               <Button
                 onClick={() => setShowResultDialog(false)}
-                className="w-full bg-gradient-to-r from-pink-500 to-purple-600"
+                className="w-full bg-gradient-to-r from-emerald-500 to-purple-600"
               >
                 إغلاق
               </Button>

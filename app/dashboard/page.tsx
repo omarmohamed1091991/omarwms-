@@ -115,7 +115,7 @@ export default async function DashboardPage() {
       title: "إدارة المستخدمين",
       href: "/admin/users",
       icon: Users,
-      color: "bg-pink-500 hover:bg-pink-600",
+      color: "bg-emerald-500 hover:bg-emerald-600",
       description: "إدارة الحسابات",
     },
     {
@@ -137,10 +137,10 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-6 sm:space-y-8">
       {/* Header with Logo */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 rounded-2xl p-6 text-white">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-gradient-to-r from-emerald-500 via-purple-500 to-indigo-500 rounded-2xl p-6 text-white">
         <div className="flex items-center gap-4">
           <div className="bg-white rounded-xl p-2">
-            <Image src="/logo.png" alt="RoseSmile" width={50} height={50} className="object-contain" />
+            <Image src="/logo.png" alt="o-wms" width={50} height={50} className="object-contain" />
           </div>
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold">مرحباً، {profile?.full_name || "المستخدم"}</h1>
@@ -215,7 +215,7 @@ export default async function DashboardPage() {
       {/* Quick Access Buttons */}
       <div>
         <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-          <Clock className="h-5 w-5 text-pink-500" />
+          <Clock className="h-5 w-5 text-emerald-500" />
           الوصول السريع
         </h2>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -284,7 +284,7 @@ export default async function DashboardPage() {
               <p className="text-sm text-violet-700">رسائل جماعية</p>
             </div>
           </div>
-          <div className="mt-4 bg-gradient-to-r from-pink-500 to-purple-500 rounded-xl p-4 text-white text-center">
+          <div className="mt-4 bg-gradient-to-r from-emerald-500 to-purple-500 rounded-xl p-4 text-white text-center">
             <p className="text-sm opacity-80">إجمالي رسائل اليوم</p>
             <p className="text-4xl font-bold">{todayTotal}</p>
           </div>

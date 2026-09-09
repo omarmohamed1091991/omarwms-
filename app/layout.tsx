@@ -12,25 +12,12 @@ const tajawal = Tajawal({
 })
 
 export const metadata: Metadata = {
-  title: "نظام إرسال رسائل واتساب",
-  description: "نظام متكامل لإدارة وإرسال رسائل واتساب الفردية والجماعية",
+  title: "o-wms | نظام إدارة رسائل واتساب",
+  description: "o-wms نظام متكامل لإدارة وإرسال رسائل واتساب الفردية والجماعية",
   generator: "v0.app",
   icons: {
-    icon: [
-      {
-        url: "/icon-light-32x32.png",
-        media: "(prefers-color-scheme: light)",
-      },
-      {
-        url: "/icon-dark-32x32.png",
-        media: "(prefers-color-scheme: dark)",
-      },
-      {
-        url: "/icon.svg",
-        type: "image/svg+xml",
-      },
-    ],
-    apple: "/apple-icon.png",
+    icon: "/logo.png",
+    apple: "/logo.png",
   },
 }
 
@@ -40,7 +27,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="ar" dir="rtl">
+    <html lang="ar" dir="rtl" className="bg-background">
       <body className={`${tajawal.className} antialiased`}>
         {children}
         <Analytics />

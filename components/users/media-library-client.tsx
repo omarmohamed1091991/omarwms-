@@ -130,7 +130,7 @@ export default function MediaLibraryClient({ userId }: { userId: string }) {
 
   return (
     <div className="space-y-6">
-      <Card className="border-2 border-dashed border-gray-300 hover:border-pink-400 transition-colors">
+      <Card className="border-2 border-dashed border-gray-300 hover:border-emerald-400 transition-colors">
         <CardContent className="pt-6">
           <div className="flex flex-col items-center justify-center py-8 space-y-4">
             <input
@@ -144,7 +144,7 @@ export default function MediaLibraryClient({ userId }: { userId: string }) {
             <Button
               onClick={() => fileInputRef.current?.click()}
               disabled={uploading}
-              className="bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white"
+              className="bg-gradient-to-r from-emerald-500 to-purple-500 hover:from-emerald-600 hover:to-purple-600 text-white"
               size="lg"
             >
               {uploading ? (
@@ -180,7 +180,7 @@ export default function MediaLibraryClient({ userId }: { userId: string }) {
           <div className="py-6 flex flex-col items-center justify-center">
             {uploadStatus === "uploading" && (
               <>
-                <Upload className="w-16 h-16 text-pink-500 animate-bounce mb-4" />
+                <Upload className="w-16 h-16 text-emerald-500 animate-bounce mb-4" />
                 <p className="text-sm text-gray-600">يرجى الانتظار...</p>
               </>
             )}
@@ -254,10 +254,10 @@ export default function MediaLibraryClient({ userId }: { userId: string }) {
                     <span>{new Date(item.uploaded_at).toLocaleDateString("ar")}</span>
                   </div>
 
-                  <div className="bg-gradient-to-r from-pink-50 via-purple-50 to-pink-50 rounded-lg p-3 border-2 border-pink-300 shadow-sm">
+                  <div className="bg-gradient-to-r from-emerald-50 via-purple-50 to-emerald-50 rounded-lg p-3 border-2 border-emerald-300 shadow-sm">
                     <div className="flex items-center gap-1 mb-1">
-                      <div className="w-2 h-2 rounded-full bg-pink-500 animate-pulse"></div>
-                      <div className="text-[10px] font-semibold text-pink-700 uppercase tracking-wide">
+                      <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                      <div className="text-[10px] font-semibold text-emerald-700 uppercase tracking-wide">
                         Media ID للقوالب
                       </div>
                     </div>
@@ -268,7 +268,7 @@ export default function MediaLibraryClient({ userId }: { userId: string }) {
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="h-7 px-2 text-xs font-semibold hover:bg-pink-200 border border-pink-300"
+                        className="h-7 px-2 text-xs font-semibold hover:bg-emerald-200 border border-emerald-300"
                         onClick={() => copyMediaId(item.media_id)}
                       >
                         {copiedId === item.media_id ? (
@@ -278,7 +278,7 @@ export default function MediaLibraryClient({ userId }: { userId: string }) {
                           </>
                         ) : (
                           <>
-                            <span className="text-pink-700">نسخ</span>
+                            <span className="text-emerald-700">نسخ</span>
                           </>
                         )}
                       </Button>

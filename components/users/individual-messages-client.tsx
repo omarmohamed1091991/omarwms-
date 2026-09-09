@@ -225,7 +225,7 @@ export function IndividualMessagesClient({
           </CardTitle>
         </CardHeader>
         <CardContent className="pt-6 space-y-4">
-          <div className="bg-pink-50 p-4 rounded-lg border border-pink-200 space-y-3">
+          <div className="bg-emerald-50 p-4 rounded-lg border border-emerald-200 space-y-3">
             <div className="flex items-center justify-between flex-wrap gap-3">
               <div>
                 <h3 className="font-semibold text-gray-900 text-sm">القوالب المعتمدة</h3>
@@ -234,7 +234,7 @@ export function IndividualMessagesClient({
               <Button
                 onClick={fetchTemplates}
                 disabled={loadingTemplates}
-                className="bg-pink-500 hover:bg-pink-600 text-white text-sm"
+                className="bg-emerald-500 hover:bg-emerald-600 text-white text-sm"
                 size="sm"
               >
                 <RefreshCw className={`w-4 h-4 ml-2 ${loadingTemplates ? "animate-spin" : ""}`} />
@@ -253,8 +253,8 @@ export function IndividualMessagesClient({
                     }}
                     className={`p-3 rounded-lg border-2 text-right transition-all text-sm flex items-start justify-between ${
                       selectedTemplate?.name === template.name
-                        ? "border-pink-500 bg-pink-100 shadow-sm"
-                        : "border-gray-200 bg-white hover:border-pink-300 hover:shadow-sm"
+                        ? "border-emerald-500 bg-emerald-100 shadow-sm"
+                        : "border-gray-200 bg-white hover:border-emerald-300 hover:shadow-sm"
                     }`}
                   >
                     <div>
@@ -262,7 +262,7 @@ export function IndividualMessagesClient({
                       <div className="text-xs text-gray-500 mt-0.5">({template.language})</div>
                     </div>
                     {selectedTemplate?.name === template.name && (
-                      <CheckCircle2 className="w-4 h-4 text-pink-500 flex-shrink-0" />
+                      <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0" />
                     )}
                   </button>
                 ))}
@@ -270,12 +270,12 @@ export function IndividualMessagesClient({
             )}
           </div>
 
-          <div className="bg-pink-50 p-4 rounded-lg space-y-3">
+          <div className="bg-emerald-50 p-4 rounded-lg space-y-3">
             <Label className="text-sm font-semibold block">اختيار رمز الدولة</Label>
             <select
               value={countryCode}
               onChange={(e) => setCountryCode(e.target.value)}
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500 text-right bg-white"
+              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-right bg-white"
             >
               {countries.map((country) => (
                 <option key={country.code} value={country.code}>
@@ -398,7 +398,7 @@ export function IndividualMessagesClient({
           <Button
             onClick={handleSend}
             disabled={sending || !phone || !messageText || (templateHasImage && !selectedMediaId)}
-            className="w-full bg-gradient-to-r from-pink-500 to-blue-900 hover:from-pink-600 hover:to-blue-950"
+            className="w-full bg-gradient-to-r from-emerald-500 to-blue-900 hover:from-emerald-600 hover:to-blue-950"
           >
             {sending ? "جاري الإرسال..." : "إرسال الرسالة"}
           </Button>

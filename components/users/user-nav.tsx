@@ -78,7 +78,7 @@ export function UserNav({ userId, userName }: UserNavProps) {
                   className={cn(
                     "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap",
                     isActive
-                      ? "bg-gradient-to-r from-pink-500 to-blue-600 text-white shadow-md"
+                      ? "bg-gradient-to-r from-emerald-500 to-blue-600 text-white shadow-md"
                       : "text-gray-600 hover:bg-gray-100 hover:text-gray-900",
                   )}
                 >

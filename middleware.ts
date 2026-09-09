@@ -2,14 +2,7 @@ import { NextResponse, type NextRequest } from "next/server"
 import { updateSession } from "@/lib/supabase/middleware"
 
 export async function middleware(request: NextRequest) {
-  // Temporary maintenance mode: skip authentication and open the dashboard directly.
-  if (request.nextUrl.pathname === "/" || request.nextUrl.pathname === "/auth/login") {
-    const url = request.nextUrl.clone()
-    url.pathname = "/users"
-    return NextResponse.redirect(url)
-  }
-
-  return NextResponse.next({ request })
+  return await updateSession(request)
 }
 
 export const config = {

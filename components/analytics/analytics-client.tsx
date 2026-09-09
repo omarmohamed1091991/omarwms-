@@ -272,11 +272,11 @@ export function AnalyticsClient({ users, totalStats }: AnalyticsClientProps) {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 relative">
-                <Image src="/logo.png" alt="RoseSmile Logo" fill className="object-contain" />
+                <Image src="/logo.png" alt="o-wms Logo" fill className="object-contain" />
               </div>
               <div>
                 <h1 className="text-xl font-bold text-slate-800">الإحصائيات الشاملة</h1>
-                <p className="text-xs text-muted-foreground">نظام واتساب RoseSmile</p>
+                <p className="text-xs text-muted-foreground">نظام واتساب o-wms</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -318,7 +318,7 @@ export function AnalyticsClient({ users, totalStats }: AnalyticsClientProps) {
                 </p>
               </div>
               <div className="text-center px-6 py-3 bg-white/15 rounded-xl backdrop-blur-sm border border-white/20">
-                <p className="text-4xl font-bold text-pink-200">{totalStats.activeUsers}</p>
+                <p className="text-4xl font-bold text-emerald-200">{totalStats.activeUsers}</p>
                 <p className="text-sm text-white/80 flex items-center justify-center gap-1">
                   <Users className="h-3.5 w-3.5" />
                   نشط
@@ -433,8 +433,8 @@ export function AnalyticsClient({ users, totalStats }: AnalyticsClientProps) {
             <CardContent className="p-5">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-semibold text-slate-700">هذا الشهر</h3>
-                <div className="p-2 bg-pink-100 rounded-lg">
-                  <Calendar className="h-4 w-4 text-pink-600" />
+                <div className="p-2 bg-emerald-100 rounded-lg">
+                  <Calendar className="h-4 w-4 text-emerald-600" />
                 </div>
               </div>
               <div className="flex items-end justify-between mb-4">
@@ -444,7 +444,7 @@ export function AnalyticsClient({ users, totalStats }: AnalyticsClientProps) {
                 </div>
                 <div className="text-left">
                   <p className="text-xs text-muted-foreground mb-1">معدل النجاح</p>
-                  <p className="text-xl font-bold text-pink-600">
+                  <p className="text-xl font-bold text-emerald-600">
                     {totalStats.month.totalSent > 0
                       ? ((totalStats.month.successful / totalStats.month.totalSent) * 100).toFixed(1)
                       : "0.0"}
@@ -714,7 +714,7 @@ export function AnalyticsClient({ users, totalStats }: AnalyticsClientProps) {
       {/* Footer */}
       <footer className="bg-white/80 backdrop-blur-sm border-t border-slate-200/80 py-4 mt-6">
         <div className="container mx-auto px-4 text-center text-sm text-muted-foreground">
-          نظام واتساب - RoseSmile - جميع الحقوق محفوظة © {new Date().getFullYear()}
+          نظام واتساب - o-wms - جميع الحقوق محفوظة © {new Date().getFullYear()}
         </div>
       </footer>
     </div>

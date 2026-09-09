@@ -471,12 +471,12 @@ export default function BulkMessagesClient({ userId }: { userId: string }) {
       </div>
 
       <Card className="shadow-md">
-        <CardHeader className="bg-gradient-to-r from-pink-50 to-pink-100 pb-4">
+        <CardHeader className="bg-gradient-to-r from-emerald-50 to-emerald-100 pb-4">
           <CardTitle className="text-base sm:text-lg">تفاصيل الرسائل الجماعية</CardTitle>
           <p className="text-xs sm:text-sm text-gray-600 mt-1">أدخل الأرقام أو ارفع ملف Excel واختر قالب الرسالة</p>
         </CardHeader>
         <CardContent className="pt-5 space-y-5">
-          <div className="bg-gradient-to-br from-pink-50 to-pink-100 p-5 rounded-xl border-2 border-pink-300 shadow-md">
+          <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 p-5 rounded-xl border-2 border-emerald-300 shadow-md">
             <div className="flex items-center justify-between mb-3">
               <div>
                 <h3 className="font-bold text-gray-900 text-base flex items-center gap-2">
@@ -494,7 +494,7 @@ export default function BulkMessagesClient({ userId }: { userId: string }) {
               </div>
               <button
                 onClick={fetchTemplates}
-                className="bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white text-xs px-4 py-2 rounded-lg font-bold transition-all shadow-md hover:shadow-lg flex items-center gap-1.5"
+                className="bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 text-white text-xs px-4 py-2 rounded-lg font-bold transition-all shadow-md hover:shadow-lg flex items-center gap-1.5"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
@@ -514,10 +514,10 @@ export default function BulkMessagesClient({ userId }: { userId: string }) {
                   type="button"
                   variant="outline"
                   onClick={() => setShowTemplateDropdown(!showTemplateDropdown)}
-                  className="w-full justify-between bg-white hover:bg-pink-50 border-2 border-pink-300 text-gray-900 font-semibold shadow-sm hover:shadow-md transition-all"
+                  className="w-full justify-between bg-white hover:bg-emerald-50 border-2 border-emerald-300 text-gray-900 font-semibold shadow-sm hover:shadow-md transition-all"
                 >
                   <span className="flex items-center gap-2">
-                    <svg className="w-4 h-4 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
@@ -533,7 +533,7 @@ export default function BulkMessagesClient({ userId }: { userId: string }) {
                 </Button>
 
                 {showTemplateDropdown && (
-                  <div className="absolute z-10 w-full mt-2 bg-white border-2 border-pink-300 rounded-lg shadow-xl max-h-64 overflow-y-auto">
+                  <div className="absolute z-10 w-full mt-2 bg-white border-2 border-emerald-300 rounded-lg shadow-xl max-h-64 overflow-y-auto">
                     {templates.map((template) => (
                       <button
                         key={template.name}
@@ -541,8 +541,8 @@ export default function BulkMessagesClient({ userId }: { userId: string }) {
                           setSelectedTemplate(template)
                           setShowTemplateDropdown(false) // إغلاق القائمة بعد الاختيار
                         }}
-                        className={`w-full p-3 text-right hover:bg-pink-50 transition-colors border-b last:border-b-0 ${
-                          selectedTemplate?.name === template.name ? "bg-pink-100 border-l-4 border-l-pink-500" : ""
+                        className={`w-full p-3 text-right hover:bg-emerald-50 transition-colors border-b last:border-b-0 ${
+                          selectedTemplate?.name === template.name ? "bg-emerald-100 border-l-4 border-l-emerald-500" : ""
                         }`}
                       >
                         <div className="font-semibold text-gray-900 text-sm">{template.name}</div>
@@ -718,7 +718,7 @@ export default function BulkMessagesClient({ userId }: { userId: string }) {
           )}
 
           {selectedTemplate && (
-            <div className="bg-gradient-to-br from-pink-400 to-pink-500 p-4 sm:p-5 rounded-lg text-white shadow-md">
+            <div className="bg-gradient-to-br from-emerald-400 to-emerald-500 p-4 sm:p-5 rounded-lg text-white shadow-md">
               <h3 className="text-base sm:text-lg font-bold mb-3 flex items-center gap-2">
                 <ImageIcon className="w-4 h-4 sm:w-5 sm:h-5" />
                 معاينة الرسالة
@@ -781,7 +781,7 @@ export default function BulkMessagesClient({ userId }: { userId: string }) {
                 </div>
 
                 {sendingStatus === "sending" && (
-                  <Card className="border-2 border-purple-200 bg-gradient-to-r from-purple-50 to-pink-50">
+                  <Card className="border-2 border-purple-200 bg-gradient-to-r from-purple-50 to-emerald-50">
                     <CardContent className="p-6">
                       <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-3">
@@ -817,7 +817,7 @@ export default function BulkMessagesClient({ userId }: { userId: string }) {
                   </Card>
                 )}
 
-                <div className="relative border-2 border-gray-300 rounded-lg overflow-hidden focus-within:border-pink-500 transition-colors">
+                <div className="relative border-2 border-gray-300 rounded-lg overflow-hidden focus-within:border-emerald-500 transition-colors">
                   <Textarea
                     placeholder="أدخل الأرقام هنا... (كل رقم في سطر منفصل)&#10;مثال:&#10;500000000&#10;501234567&#10;502345678"
                     value={phoneNumbers.map((p) => p.phoneNumber).join("\n")}
@@ -888,7 +888,7 @@ export default function BulkMessagesClient({ userId }: { userId: string }) {
               !whatsappSettings?.whatsapp_access_token ||
               !whatsappSettings?.whatsapp_phone_number_id
             }
-            className="w-full bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 hover:from-pink-600 hover:via-purple-600 hover:to-indigo-500 text-white text-base font-bold py-6 shadow-xl hover:shadow-2xl disabled:opacity-50 disabled:cursor-not-allowed transition-all transform hover:scale-[1.02] active:scale-[0.98]"
+            className="w-full bg-gradient-to-r from-emerald-500 via-purple-500 to-indigo-500 hover:from-emerald-600 hover:via-purple-600 hover:to-indigo-500 text-white text-base font-bold py-6 shadow-xl hover:shadow-2xl disabled:opacity-50 disabled:cursor-not-allowed transition-all transform hover:scale-[1.02] active:scale-[0.98]"
           >
             {sendingStatus === "sending" ? (
               <>
@@ -937,7 +937,7 @@ export default function BulkMessagesClient({ userId }: { userId: string }) {
                 <div className="text-2xl font-bold text-green-600">{sendResult?.delivered || 0}</div>
                 <div className="text-sm text-muted-foreground">تم التسليم لـ Meta</div>
               </div>
-              <div className="bg-gradient-to-br from-red-50 to-rose-50 dark:from-red-900/20 dark:to-rose-900/20 p-4 rounded-xl border border-red-200 dark:border-red-800">
+              <div className="bg-gradient-to-br from-red-50 to-green-50 dark:from-red-900/20 dark:to-green-900/20 p-4 rounded-xl border border-red-200 dark:border-red-800">
                 <div className="w-12 h-12 bg-red-100 dark:bg-red-900/50 rounded-full flex items-center justify-center mx-auto mb-2">
                   <XCircle className="h-6 w-6 text-red-600" />
                 </div>
