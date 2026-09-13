@@ -34,6 +34,7 @@ export function LoginForm() {
       })
 
       if (signInError) {
+        console.error("[v0] Supabase sign-in failed:", signInError.message)
         setError("البريد الإلكتروني أو كلمة المرور غير صحيحة")
         setLoading(false)
         return
@@ -86,7 +87,7 @@ export function LoginForm() {
               required
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              placeholder="admin@rosesmile.com"
+              placeholder="admin@o-wms.com"
               className="h-11"
               disabled={loading}
               dir="ltr"
@@ -114,7 +115,7 @@ export function LoginForm() {
           <Button
             type="submit"
             disabled={loading}
-            className="w-full h-11 bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-700 hover:to-rose-700 text-white font-medium"
+            className="w-full h-11 bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white font-medium"
           >
             {loading ? (
               <>

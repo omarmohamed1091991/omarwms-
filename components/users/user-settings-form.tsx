@@ -28,7 +28,7 @@ export function UserSettingsForm({ userId, profile, settings }: any) {
             <Label>رقم الجوال</Label>
             <Input defaultValue={profile?.phone_number || ""} className="font-mono" disabled />
           </div>
-          <Button className="bg-gradient-to-r from-pink-500 to-blue-900">حفظ التغييرات</Button>
+          <Button className="bg-gradient-to-r from-emerald-500 to-blue-900">حفظ التغييرات</Button>
         </CardContent>
       </Card>
 

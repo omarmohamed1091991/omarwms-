@@ -57,8 +57,8 @@ export function UserSidebar({ userId, userName, userPhone }: UserSidebarProps) {
       href: `/users/${userId}/bulk`,
       label: "رسائل جماعية",
       icon: Users,
-      gradient: "from-pink-500 to-pink-600",
-      bgHover: "hover:bg-pink-50",
+      gradient: "from-emerald-500 to-emerald-600",
+      bgHover: "hover:bg-emerald-50",
     },
     {
       href: `/users/${userId}/free-messages`,
@@ -103,18 +103,18 @@ export function UserSidebar({ userId, userName, userPhone }: UserSidebarProps) {
       <div className="p-4 border-b border-gray-100">
         <Link href="/users" className="flex items-center gap-3 group">
           <div className="relative">
-            <div className="absolute inset-0 bg-gradient-to-r from-pink-400 to-blue-400 rounded-xl blur-md opacity-50 group-hover:opacity-75 transition-opacity" />
+            <div className="absolute inset-0 bg-gradient-to-r from-emerald-400 to-green-500 rounded-xl blur-md opacity-50 group-hover:opacity-75 transition-opacity" />
             <Image
               src="/logo.png"
-              alt="RoseSmile Logo"
+              alt="o-wms Logo"
               width={48}
               height={48}
               className="object-contain relative z-10"
             />
           </div>
           <div className="flex flex-col">
-            <span className="text-sm font-bold bg-gradient-to-r from-pink-500 to-blue-600 bg-clip-text text-transparent">
-              RoseSmile
+            <span className="text-sm font-bold bg-gradient-to-r from-emerald-500 to-green-700 bg-clip-text text-transparent">
+              o-wms
             </span>
             <span className="text-[10px] text-gray-400">نظام واتساب</span>
           </div>
@@ -122,9 +122,9 @@ export function UserSidebar({ userId, userName, userPhone }: UserSidebarProps) {
       </div>
 
       {/* User Info */}
-      <div className="p-4 border-b border-gray-100 bg-gradient-to-r from-pink-50/50 to-blue-50/50">
+      <div className="p-4 border-b border-gray-100 bg-gradient-to-r from-emerald-50/50 to-green-50/50">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-r from-pink-500 to-blue-600 flex items-center justify-center text-white font-bold text-sm shadow-lg">
+          <div className="w-10 h-10 rounded-full bg-gradient-to-r from-emerald-500 to-green-700 flex items-center justify-center text-white font-bold text-sm shadow-lg">
             {userName?.charAt(0) || "U"}
           </div>
           <div className="flex-1 min-w-0">
@@ -227,7 +227,7 @@ export function UserSidebar({ userId, userName, userPhone }: UserSidebarProps) {
           <Sheet open={isOpen} onOpenChange={setIsOpen}>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon" className="relative overflow-hidden group">
-                <div className="absolute inset-0 bg-gradient-to-r from-pink-500/10 to-blue-500/10 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg" />
+                <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 to-green-500/10 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg" />
                 <Menu className="h-5 w-5 relative z-10" />
               </Button>
             </SheetTrigger>
@@ -240,13 +240,13 @@ export function UserSidebar({ userId, userName, userPhone }: UserSidebarProps) {
           </Sheet>
 
           <Link href="/users" className="flex items-center gap-2">
-            <Image src="/logo.png" alt="RoseSmile Logo" width={36} height={36} className="object-contain" />
-            <span className="text-sm font-bold bg-gradient-to-r from-pink-500 to-blue-600 bg-clip-text text-transparent">
-              RoseSmile
+            <Image src="/logo.png" alt="o-wms Logo" width={36} height={36} className="object-contain" />
+            <span className="text-sm font-bold bg-gradient-to-r from-emerald-500 to-green-700 bg-clip-text text-transparent">
+              o-wms
             </span>
           </Link>
 
-          <div className="w-10 h-10 rounded-full bg-gradient-to-r from-pink-500 to-blue-600 flex items-center justify-center text-white font-bold text-sm shadow-md">
+          <div className="w-10 h-10 rounded-full bg-gradient-to-r from-emerald-500 to-green-700 flex items-center justify-center text-white font-bold text-sm shadow-md">
             {userName?.charAt(0) || "U"}
           </div>
         </div>

@@ -43,7 +43,7 @@ export function UserProfileMenu({ user, userId }: UserProfileMenuProps) {
             <p className="text-sm font-semibold text-gray-900">{user.full_name || "بدون اسم"}</p>
             <p className="text-xs text-gray-500 font-mono">{user.phone_number}</p>
           </div>
-          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-pink-500 to-blue-900 flex items-center justify-center text-white text-lg font-bold cursor-pointer hover:shadow-lg transition-shadow">
+          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-emerald-500 to-blue-900 flex items-center justify-center text-white text-lg font-bold cursor-pointer hover:shadow-lg transition-shadow">
             {user.full_name?.charAt(0) || user.phone_number.charAt(0)}
           </div>
         </button>

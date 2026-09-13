@@ -74,7 +74,7 @@ export default function CreateUserForm() {
   return (
     <Card className="p-5 shadow-md bg-white border">
       <div className="mb-5">
-        <h2 className="text-base font-bold bg-gradient-to-r from-pink-500 to-blue-600 bg-clip-text text-transparent mb-1">
+        <h2 className="text-base font-bold bg-gradient-to-r from-emerald-500 to-blue-600 bg-clip-text text-transparent mb-1">
           إضافة مستخدم جديد
         </h2>
         <p className="text-xs text-gray-600">قم بملء البيانات لإنشاء حساب مستخدم جديد في النظام</p>
@@ -97,7 +97,7 @@ export default function CreateUserForm() {
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <Label htmlFor="fullName" className="flex items-center gap-1.5 mb-1.5 text-gray-700 font-semibold text-xs">
-            <User className="w-3.5 h-3.5 text-pink-500" />
+            <User className="w-3.5 h-3.5 text-emerald-500" />
             الاسم الكامل
           </Label>
           <Input
@@ -107,14 +107,14 @@ export default function CreateUserForm() {
             value={formData.fullName}
             onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
             placeholder="أدخل الاسم الكامل"
-            className="text-xs h-9 border focus:border-pink-500 transition-colors"
+            className="text-xs h-9 border focus:border-emerald-500 transition-colors"
             disabled={loading}
           />
         </div>
 
         <div>
           <Label htmlFor="phoneNumber" className="flex items-center gap-1.5 mb-1.5 text-gray-700 font-semibold text-xs">
-            <Phone className="w-3.5 h-3.5 text-pink-500" />
+            <Phone className="w-3.5 h-3.5 text-emerald-500" />
             رقم الجوال (WhatsApp)
           </Label>
           <Input
@@ -124,7 +124,7 @@ export default function CreateUserForm() {
             value={formData.phoneNumber}
             onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
             placeholder="مثال: 966501234567"
-            className="text-xs h-9 border focus:border-pink-500 transition-colors"
+            className="text-xs h-9 border focus:border-emerald-500 transition-colors"
             dir="ltr"
             disabled={loading}
           />
@@ -133,7 +133,7 @@ export default function CreateUserForm() {
 
         <div>
           <Label htmlFor="email" className="flex items-center gap-1.5 mb-1.5 text-gray-700 font-semibold text-xs">
-            <Mail className="w-3.5 h-3.5 text-pink-500" />
+            <Mail className="w-3.5 h-3.5 text-emerald-500" />
             البريد الإلكتروني
           </Label>
           <Input
@@ -143,7 +143,7 @@ export default function CreateUserForm() {
             value={formData.email}
             onChange={(e) => setFormData({ ...formData, email: e.target.value })}
             placeholder="email@example.com"
-            className="text-xs h-9 border focus:border-pink-500 transition-colors"
+            className="text-xs h-9 border focus:border-emerald-500 transition-colors"
             dir="ltr"
             disabled={loading}
           />
@@ -151,7 +151,7 @@ export default function CreateUserForm() {
 
         <div>
           <Label htmlFor="password" className="flex items-center gap-1.5 mb-1.5 text-gray-700 font-semibold text-xs">
-            <Lock className="w-3.5 h-3.5 text-pink-500" />
+            <Lock className="w-3.5 h-3.5 text-emerald-500" />
             كلمة المرور
           </Label>
           <Input
@@ -161,7 +161,7 @@ export default function CreateUserForm() {
             value={formData.password}
             onChange={(e) => setFormData({ ...formData, password: e.target.value })}
             placeholder="أدخل كلمة المرور (8 أحرف على الأقل)"
-            className="text-xs h-9 border focus:border-pink-500 transition-colors"
+            className="text-xs h-9 border focus:border-emerald-500 transition-colors"
             dir="ltr"
             disabled={loading}
             minLength={8}
@@ -212,7 +212,7 @@ export default function CreateUserForm() {
         <Button
           type="submit"
           disabled={loading}
-          className="w-full bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white text-xs h-9 gap-1.5 shadow-md hover:shadow-lg transition-all font-semibold"
+          className="w-full bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 text-white text-xs h-9 gap-1.5 shadow-md hover:shadow-lg transition-all font-semibold"
         >
           {loading ? (
             <>

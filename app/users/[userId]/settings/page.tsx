@@ -18,7 +18,7 @@ export default async function SettingsPage({ params }: { params: Promise<{ userI
       {/* Header */}
       <div className="text-center mb-8">
         <div className="flex justify-center mb-4">
-          <Image src="/logo.png" alt="RoseSmile" width={60} height={60} />
+          <Image src="/logo.png" alt="o-wms" width={60} height={60} />
         </div>
         <h1 className="text-2xl font-bold text-gray-900">الإعدادات</h1>
         <p className="text-gray-600 text-sm">إدارة إعدادات واتساب وقوالب الرسائل</p>

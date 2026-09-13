@@ -116,7 +116,7 @@ export function ProfileSettingsForm({ userId, profile, isAdmin }: ProfileSetting
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <UserIcon className="w-5 h-5 text-pink-600" />
+            <UserIcon className="w-5 h-5 text-emerald-600" />
             المعلومات الشخصية
           </CardTitle>
           <CardDescription>قم بتحديث بياناتك الأساسية</CardDescription>
@@ -183,7 +183,7 @@ export function ProfileSettingsForm({ userId, profile, isAdmin }: ProfileSetting
             <Button
               type="submit"
               disabled={loading}
-              className="w-full bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-700 hover:to-rose-700"
+              className="w-full bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700"
             >
               {loading ? (
                 <>
