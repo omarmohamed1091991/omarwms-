@@ -5,12 +5,16 @@ import { createAdminClient } from "./admin"
 export async function createClient() {
   const cookieStore = await cookies()
 
-  const supabaseUrl =
-    process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || "https://nrwsnxxzjczsrzwvkawa.supabase.co"
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL
   const supabaseAnonKey =
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
     process.env.SUPABASE_ANON_KEY ||
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5yd3NueHh6amN6c3J6d3ZrYXdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzcwMjE0NjUsImV4cCI6MjA1MjU5NzQ2NX0.qY8xPOUbDn-Jp2qCnCUfYPqGJ_pGJBkTHxBUqv0tOkU"
+    process.env.SUPABASE_PUBLISHABLE_KEY
+
+  if (!supabaseUrl || !supabaseAnonKey) {
+    throw new Error("Missing Supabase environment variables. Check your project settings.")
+  }
 
   return createServerClient(supabaseUrl, supabaseAnonKey, {
     cookies: {

@@ -34,6 +34,7 @@ export function LoginForm() {
       })
 
       if (signInError) {
+        console.error("[v0] Supabase sign-in failed:", signInError.message)
         setError("البريد الإلكتروني أو كلمة المرور غير صحيحة")
         setLoading(false)
         return
