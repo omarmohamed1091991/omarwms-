@@ -31,7 +31,6 @@ import {
   X,
 } from "lucide-react"
 import { sendReplyMessage, fetchMessagesFromServer } from "@/app/users/[userId]/inbox/actions"
-import jsPDF from "jspdf"
 
 type FilterType = "all" | "unread" | "read"
 
@@ -469,9 +468,10 @@ export function InboxClient({ userId, initialMessages = [] }: { userId: string; 
     setSelectedForExport([])
   }
 
-  function exportCurrentToPDF() {
+  async function exportCurrentToPDF() {
     if (!selectedConversation) return
 
+    const { default: jsPDF } = await import("jspdf")
     const doc = new jsPDF()
     let yPos = 20
 
