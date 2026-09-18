@@ -61,6 +61,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
 // Receive messages (POST request from Meta)
 export async function POST(request: NextRequest, { params }: { params: Promise<{ userId: string }> }) {
+  const supabase = createAdminClient()
   const { userId } = await params
 
   try {
@@ -172,9 +173,12 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
                 message_text: messageText,
                 message_type: messageType,
                 media_url: mediaUrl,
+                whatsapp_message_id: message.id || null,
                 direction: "incoming",
                 is_read: false,
-                received_at: new Date().toISOString(),
+                received_at: message.timestamp
+                  ? new Date(Number(message.timestamp) * 1000).toISOString()
+                  : new Date().toISOString(),
               })
 
               if (error) {
