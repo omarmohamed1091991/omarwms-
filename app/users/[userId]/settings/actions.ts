@@ -27,14 +27,9 @@ export async function saveWhatsAppSettings(
   },
 ) {
   try {
-    console.log("[v0] Server Action: Saving settings for user:", userId)
-
     const supabase = createAdminClient()
 
     const cleanedToken = cleanAccessToken(settings.whatsapp_access_token)
-    console.log("[v0] Original token length:", settings.whatsapp_access_token.length)
-    console.log("[v0] Cleaned token length:", cleanedToken.length)
-    console.log("[v0] Cleaned token last 30:", cleanedToken.slice(-30))
 
     const { data, error } = await supabase
       .from("user_profiles")

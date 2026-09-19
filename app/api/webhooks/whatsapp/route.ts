@@ -34,6 +34,8 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const supabase = createAdminClient()
+
   try {
     const body = await request.json()
     console.log("[v0] Webhook received:", JSON.stringify(body, null, 2))
@@ -117,10 +119,12 @@ export async function POST(request: NextRequest) {
                 message_text: messageText,
                 message_type: messageType,
                 media_url: mediaUrl,
-                whatsapp_message_id: message.id,
+                whatsapp_message_id: message.id || null,
                 direction: "incoming",
                 is_read: false,
-                received_at: new Date().toISOString(),
+                received_at: message.timestamp
+                  ? new Date(Number(message.timestamp) * 1000).toISOString()
+                  : new Date().toISOString(),
               })
 
               if (error) {

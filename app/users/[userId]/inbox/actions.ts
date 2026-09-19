@@ -27,25 +27,53 @@ export async function fetchMessagesFromServer(userId: string): Promise<IncomingM
 
   // جلب جميع الرسائل بدون حد أقصى
   while (hasMore) {
-    const { data, error } = await supabase
+    const { data: incoming, error: incomingError } = await supabase
       .from("incoming_messages")
       .select("*")
       .eq("user_id", userId)
       .order("received_at", { ascending: false })
       .range(page * pageSize, (page + 1) * pageSize - 1)
 
-    if (error) {
-      console.error("Error fetching messages page:", page, error)
+    if (incomingError) {
+      console.error("Error fetching incoming messages page:", page, incomingError)
       break
     }
 
-    if (data && data.length > 0) {
-      allMessages.push(...data)
+    if (incoming && incoming.length > 0) {
+      allMessages.push(...incoming)
     }
 
-    // استمر في جلب الصفحات حتى لا توجد بيانات
-    hasMore = data && data.length === pageSize
+    hasMore = incoming && incoming.length === pageSize
     page++
+  }
+
+  const { data: outgoing, error: outgoingError } = await supabase
+    .from("individual_messages")
+    .select("id, user_id, recipient_phone, message_text, media_url, message_type, whatsapp_message_id, sent_at, created_at")
+    .eq("user_id", userId)
+
+  if (outgoingError) {
+    console.error("Error fetching outgoing messages:", outgoingError)
+  } else if (outgoing) {
+    allMessages.push(
+      ...outgoing.map((message) => ({
+        id: message.id,
+        user_id: message.user_id,
+        sender_phone: message.recipient_phone,
+        sender_name: null,
+        message_text: message.message_text || "",
+        media_url: message.media_url,
+        message_type: message.message_type || "text",
+        direction: "outgoing",
+        is_read: true,
+        received_at: message.sent_at || message.created_at,
+        whatsapp_message_id: message.whatsapp_message_id,
+      })),
+    )
+  }
+
+  if (allMessages.length > 0) {
+    allMessages.sort((a, b) => new Date(b.received_at).getTime() - new Date(a.received_at).getTime())
   }
 
   // عكس الترتيب ليكون من الأقدم للأحدث
