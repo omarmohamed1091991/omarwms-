@@ -19,6 +19,7 @@ export interface IncomingMessage {
 
 export async function fetchMessagesFromServer(userId: string): Promise<IncomingMessage[]> {
   const supabase = createAdminClient()
+  const allMessages: IncomingMessage[] = []
 
   const [{ data: incoming, error: incomingError }, { data: outgoing, error: outgoingError }] = await Promise.all([
     supabase
