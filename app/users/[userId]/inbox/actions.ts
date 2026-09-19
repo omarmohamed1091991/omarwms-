@@ -20,40 +20,29 @@ export interface IncomingMessage {
 export async function fetchMessagesFromServer(userId: string): Promise<IncomingMessage[]> {
   const supabase = createAdminClient()
 
-  const allMessages: IncomingMessage[] = []
-  const pageSize = 1000
-  let page = 0
-  let hasMore = true
-
-  // جلب جميع الرسائل بدون حد أقصى
-  while (hasMore) {
-    const { data: incoming, error: incomingError } = await supabase
+  const [{ data: incoming, error: incomingError }, { data: outgoing, error: outgoingError }] = await Promise.all([
+    supabase
       .from("incoming_messages")
       .select("*")
       .eq("user_id", userId)
-      .order("received_at", { ascending: false })
-      .range(page * pageSize, (page + 1) * pageSize - 1)
+      .order("received_at", { ascending: true })
+      .limit(5000),
+    supabase
+      .from("individual_messages")
+      .select("id, user_id, recipient_phone, message_text, media_url, message_type, whatsapp_message_id, sent_at, created_at")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: true })
+      .limit(5000),
+  ])
 
-    if (incomingError) {
-      console.error("Error fetching incoming messages page:", page, incomingError)
-      break
-    }
-
-    if (incoming && incoming.length > 0) {
-      allMessages.push(...incoming)
-    }
-
-    hasMore = incoming && incoming.length === pageSize
-    page++
+  if (incomingError) {
+    console.error("[v0] Error fetching incoming inbox messages:", incomingError)
+  } else if (incoming) {
+    allMessages.push(...incoming)
   }
 
-  const { data: outgoing, error: outgoingError } = await supabase
-    .from("individual_messages")
-    .select("id, user_id, recipient_phone, message_text, media_url, message_type, whatsapp_message_id, sent_at, created_at")
-    .eq("user_id", userId)
-
   if (outgoingError) {
-    console.error("Error fetching outgoing messages:", outgoingError)
+    console.error("[v0] Error fetching outgoing inbox messages:", outgoingError)
   } else if (outgoing) {
     allMessages.push(
       ...outgoing.map((message) => ({
