@@ -77,20 +77,16 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
           console.log("[v0] Phone Number ID from Meta:", phoneNumberId)
 
-          let targetUserId = userId // default to URL userId
+          let targetUserIds = [userId]
 
           if (phoneNumberId) {
-            const { data: userProfile, error: userError } = await supabase
+            const { data: userProfiles, error: userError } = await supabase
               .from("user_profiles")
-              .select("id, full_name")
+              .select("id")
               .eq("whatsapp_phone_number_id", phoneNumberId)
-              .single()
 
-            if (userProfile && !userError) {
-              targetUserId = userProfile.id
-              console.log("[v0] Found user by phone_number_id:", userProfile.full_name, "ID:", targetUserId)
-            } else {
-              console.log("[v0] User not found for phone_number_id:", phoneNumberId, "Using URL userId:", userId)
+            if (!userError && userProfiles?.length) {
+              targetUserIds = Array.from(new Set(userProfiles.map((profile) => profile.id)))
             }
           }
 
@@ -154,50 +150,27 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
                 messageText = message.interactive.list_reply.title
               }
 
-              console.log(
-                "[v0] Saving message from:",
-                message.from,
-                "Name:",
-                senderName,
-                "Type:",
-                messageType,
-                "For user:",
-                targetUserId,
+              const receivedAt = message.timestamp
+                ? new Date(Number(message.timestamp) * 1000).toISOString()
+                : new Date().toISOString()
+
+              const { error } = await supabase.from("incoming_messages").insert(
+                targetUserIds.map((targetUserId) => ({
+                  user_id: targetUserId,
+                  sender_phone: message.from,
+                  sender_name: senderName,
+                  message_text: messageText,
+                  message_type: messageType,
+                  media_url: mediaUrl,
+                  whatsapp_message_id: message.id || null,
+                  direction: "incoming",
+                  is_read: false,
+                  received_at: receivedAt,
+                })),
               )
 
-              // حفظ الرسالة الواردة في قاعدة البيانات مع اسم المرسل
-              const { data, error } = await supabase.from("incoming_messages").insert({
-                user_id: targetUserId, // ← استخدام المستخدم الصحيح بدلاً من userId من URL
-                sender_phone: message.from,
-                sender_name: senderName,
-                message_text: messageText,
-                message_type: messageType,
-                media_url: mediaUrl,
-                whatsapp_message_id: message.id || null,
-                direction: "incoming",
-                is_read: false,
-                received_at: message.timestamp
-                  ? new Date(Number(message.timestamp) * 1000).toISOString()
-                  : new Date().toISOString(),
-              })
-
               if (error) {
-                console.error("[v0] Error saving message for user:", targetUserId, error)
-              } else {
-                console.log("[v0] Message saved successfully for user:", targetUserId, "with name:", senderName)
-              }
-
-              if (senderName) {
-                const { error: updateError } = await supabase
-                  .from("incoming_messages")
-                  .update({ sender_name: senderName })
-                  .eq("user_id", targetUserId) // ← استخدام المستخدم الصحيح
-                  .eq("sender_phone", message.from)
-                  .is("sender_name", null)
-
-                if (updateError) {
-                  console.error("[v0] Error updating sender name:", updateError)
-                }
+                console.error("[v0] Error saving incoming message for users:", targetUserIds, error)
               }
             }
           }
