@@ -56,7 +56,8 @@ export function LoginForm() {
 
       router.refresh()
     } catch (err) {
-      setError("حدث خطأ غير متوقع، يرجى المحاولة مرة أخرى")
+      console.error("[v0] Unexpected login error:", err)
+      setError("تعذر الاتصال بخدمة تسجيل الدخول. تحقق من إعدادات Supabase ثم حاول مرة أخرى")
       setLoading(false)
     }
   }
