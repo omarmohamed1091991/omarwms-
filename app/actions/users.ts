@@ -54,7 +54,6 @@ export async function createUser(formData: FormData) {
         whatsapp_token: whatsapp_token || null,
         role: "user",
         is_active: true,
-        account_status: "active",
       })
       .eq("id", authData.user.id)
 
@@ -88,28 +87,6 @@ export async function deleteUser(userId: string) {
     return { success: true }
   } catch (error) {
     console.error("[v0] Delete user error:", error)
-    return { success: false, error: "حدث خطأ غير متوقع" }
-  }
-}
-
-export async function updateUserStatus(userId: string, status: "active" | "paused" | "suspended") {
-  try {
-    const supabaseAdmin = createAdminClient()
-    const { error } = await supabaseAdmin
-      .from("user_profiles")
-      .update({ account_status: status, is_active: status === "active" })
-      .eq("id", userId)
-
-    if (error) {
-      console.error("[v0] User status update error:", error)
-      return { success: false, error: "فشل تحديث حالة المستخدم" }
-    }
-
-    revalidatePath("/users")
-    revalidatePath(`/users/${userId}`)
-    return { success: true }
-  } catch (error: any) {
-    console.error("[v0] Update user status error:", error)
     return { success: false, error: "حدث خطأ غير متوقع" }
   }
 }
