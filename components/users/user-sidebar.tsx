@@ -6,7 +6,6 @@ import Image from "next/image"
 import { usePathname, useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
 import {
-  Circle,
   Settings,
   MessageSquare,
   Users,
@@ -26,7 +25,6 @@ interface UserSidebarProps {
   userId: string
   userName: string
   userPhone?: string
-  accountStatus: "active" | "paused" | "suspended"
 }
 
 export function UserSidebar({ userId, userName, userPhone }: UserSidebarProps) {
@@ -136,31 +134,6 @@ export function UserSidebar({ userId, userName, userPhone }: UserSidebarProps) {
                 {userPhone}
               </p>
             )}
-            <div className="mt-1 flex items-center gap-1.5">
-              <Circle
-                className={cn(
-                  "h-2.5 w-2.5 fill-current",
-                  accountStatus === "active"
-                    ? "text-emerald-500"
-                    : accountStatus === "paused"
-                      ? "text-amber-500"
-                      : "text-red-500",
-                )}
-                aria-hidden="true"
-              />
-              <span
-                className={cn(
-                  "text-[11px] font-semibold",
-                  accountStatus === "active"
-                    ? "text-emerald-700"
-                    : accountStatus === "paused"
-                      ? "text-amber-700"
-                      : "text-red-700",
-                )}
-              >
-                {accountStatus === "active" ? "نشط" : accountStatus === "paused" ? "موقوف مؤقتاً" : "غير نشط"}
-              </span>
-            </div>
           </div>
         </div>
       </div>

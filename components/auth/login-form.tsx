@@ -11,13 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Loader2, LogIn, Mail, Lock, AlertCircle } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 
-export function LoginForm({
-  supabaseUrl,
-  supabaseKey,
-}: {
-  supabaseUrl?: string
-  supabaseKey?: string
-}) {
+export function LoginForm() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -32,7 +26,7 @@ export function LoginForm({
     setError(null)
 
     try {
-      const supabase = createClient({ supabaseUrl, supabaseKey })
+      const supabase = createClient()
 
       const { data, error: signInError } = await supabase.auth.signInWithPassword({
         email: formData.email,

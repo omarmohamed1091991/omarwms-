@@ -14,8 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Circle, MessageCircle } from "lucide-react"
-import { Badge } from "@/components/ui/badge"
+import { MessageCircle } from "lucide-react"
 
 interface DashboardHeaderProps {
   user: User
@@ -39,13 +38,6 @@ export function DashboardHeader({ user, profile }: DashboardHeaderProps) {
       .join("")
       .toUpperCase() || "U"
 
-  const accountStatus = profile?.account_status || (profile?.is_active ? "active" : "suspended")
-  const statusDetails = {
-    active: { label: "نشط", className: "border-emerald-200 bg-emerald-50 text-emerald-700" },
-    paused: { label: "موقوف مؤقتاً", className: "border-amber-200 bg-amber-50 text-amber-700" },
-    suspended: { label: "غير نشط", className: "border-red-200 bg-red-50 text-red-700" },
-  }[accountStatus]
-
   return (
     <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
       <div className="px-4 sm:px-6 lg:px-8 py-3 sm:py-4 flex items-center justify-between gap-4">
@@ -66,13 +58,6 @@ export function DashboardHeader({ user, profile }: DashboardHeaderProps) {
                 <AvatarFallback>{initials}</AvatarFallback>
               </Avatar>
               <span className="hidden sm:inline text-sm">{profile?.full_name || user.email}</span>
-              <Badge
-                variant="outline"
-                className={`hidden sm:inline-flex items-center gap-1 rounded-full px-2 py-1 text-[11px] font-semibold ${statusDetails.className}`}
-              >
-                <Circle className="h-2 w-2 fill-current" aria-hidden="true" />
-                {statusDetails.label}
-              </Badge>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
