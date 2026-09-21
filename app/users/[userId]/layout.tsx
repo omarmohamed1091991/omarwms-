@@ -24,7 +24,12 @@ export default async function UserLayout({
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50/50 via-white to-blue-50/50">
       {/* Sidebar */}
-      <UserSidebar userId={userId} userName={user.full_name || user.phone_number} userPhone={user.phone_number} />
+      <UserSidebar
+        userId={userId}
+        userName={user.full_name || user.phone_number}
+        userPhone={user.phone_number}
+        accountStatus={user.account_status || (user.is_active ? "active" : "suspended")}
+      />
 
       {/* Main Content - يبدأ مباشرة بعد الـ sidebar */}
       <main className="lg:mr-64 min-h-screen">
