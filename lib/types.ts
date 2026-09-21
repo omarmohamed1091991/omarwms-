@@ -5,6 +5,7 @@ export interface UserProfile {
   whatsapp_instance_id: string | null
   whatsapp_token: string | null
   is_active: boolean
+  account_status: "active" | "paused" | "suspended"
   created_at: string
   updated_at: string
   role: "admin" | "user" // إضافة role
