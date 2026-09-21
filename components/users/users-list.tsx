@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Trash2, Phone, Search, Settings, Calendar, Shield, User, Sparkles } from "lucide-react"
-import { deleteUser, updateUserRole } from "@/app/actions/users"
+import { deleteUser, updateUserRole, updateUserStatus } from "@/app/actions/users"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -20,6 +20,7 @@ interface UserInterface {
   whatsapp_instance_id: string | null
   whatsapp_token: string | null
   is_active: boolean
+  account_status: "active" | "paused" | "suspended"
   created_at: string
   role: "admin" | "user"
   email: string | null
@@ -41,6 +42,7 @@ export function UsersList({ users }: { users: UserInterface[] }) {
   const [searchTerm, setSearchTerm] = useState("")
   const [deleting, setDeleting] = useState<string | null>(null)
   const [updatingRole, setUpdatingRole] = useState<string | null>(null)
+  const [updatingStatus, setUpdatingStatus] = useState<string | null>(null)
 
   const filteredUsers = users.filter(
     (user) =>
@@ -75,6 +77,30 @@ export function UsersList({ users }: { users: UserInterface[] }) {
       alert(result.error || "حدث خطأ أثناء تحديث الصلاحيات")
     }
     setUpdatingRole(null)
+  }
+
+  async function handleStatusChange(userId: string, status: "active" | "paused" | "suspended") {
+    setUpdatingStatus(userId)
+    const result = await updateUserStatus(userId, status)
+
+    if (result.success) {
+      router.refresh()
+    } else {
+      alert(result.error || "حدث خطأ أثناء تحديث حالة المستخدم")
+    }
+    setUpdatingStatus(null)
+  }
+
+  function getStatusLabel(status: UserInterface["account_status"]) {
+    return status === "active" ? "نشط" : status === "paused" ? "موقوف مؤقتاً" : "غير نشط"
+  }
+
+  function getStatusClass(status: UserInterface["account_status"]) {
+    return status === "active"
+      ? "bg-green-100 text-green-700"
+      : status === "paused"
+        ? "bg-amber-100 text-amber-700"
+        : "bg-gray-100 text-gray-600"
   }
 
   function handleCardClick(userId: string) {
@@ -162,7 +188,7 @@ export function UsersList({ users }: { users: UserInterface[] }) {
                           </span>
                         </div>
                         <div
-                          className={`absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full border-2 border-white shadow flex items-center justify-center ${user.is_active ? "bg-green-500" : "bg-gray-400"}`}
+                          className={`absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full border-2 border-white shadow flex items-center justify-center ${user.account_status === "active" ? "bg-green-500" : user.account_status === "paused" ? "bg-amber-500" : "bg-gray-400"}`}
                         >
                           <div
                             className={`w-1.5 h-1.5 rounded-full bg-white ${user.is_active ? "animate-pulse" : ""}`}
@@ -174,12 +200,8 @@ export function UsersList({ users }: { users: UserInterface[] }) {
                     <div className="text-center mb-2">
                       <h3 className="text-sm font-bold text-gray-900 mb-1 truncate">{user.full_name || "بدون اسم"}</h3>
                       <div className="flex justify-center gap-1 flex-wrap">
-                        <Badge
-                          className={`px-2 py-0.5 text-[10px] font-medium border-0 ${
-                            user.is_active ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"
-                          }`}
-                        >
-                          {user.is_active ? "نشط" : "غير نشط"}
+                        <Badge className={`px-2 py-0.5 text-[10px] font-medium border-0 ${getStatusClass(user.account_status)}`}>
+                          {getStatusLabel(user.account_status)}
                         </Badge>
                         <Badge
                           className={`px-2 py-0.5 text-[10px] font-medium border-0 ${
@@ -202,6 +224,23 @@ export function UsersList({ users }: { users: UserInterface[] }) {
                           {new Date(user.created_at).toLocaleDateString("ar-SA")}
                         </span>
                       </div>
+                    </div>
+
+                    <div className="mb-2" onClick={(e) => e.stopPropagation()}>
+                      <Select
+                        value={user.account_status}
+                        onValueChange={(value) => handleStatusChange(user.id, value as UserInterface["account_status"])}
+                        disabled={updatingStatus === user.id}
+                      >
+                        <SelectTrigger className="h-7 text-[11px] rounded-lg border-gray-200 focus:border-emerald-500">
+                          <SelectValue placeholder="حالة المستخدم" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="active" className="text-xs">نشط</SelectItem>
+                          <SelectItem value="paused" className="text-xs">موقوف مؤقتاً</SelectItem>
+                          <SelectItem value="suspended" className="text-xs">غير نشط</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
 
                     <div className="mb-2" onClick={(e) => e.stopPropagation()}>
