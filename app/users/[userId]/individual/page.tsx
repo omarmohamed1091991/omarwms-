@@ -7,11 +7,20 @@ export default async function IndividualMessagesPage({ params }: { params: Promi
   const { userId } = await params
   const supabase = createAdminClient()
 
-  const { data: messages } = await supabase
-    .from("individual_messages")
-    .select("*")
-    .eq("user_id", userId)
-    .order("created_at", { ascending: false })
+  const [{ data: messages }, { data: profile }] = await Promise.all([
+    supabase
+      .from("individual_messages")
+      .select("*")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false }),
+    supabase.from("user_profiles").select("account_status, is_active").eq("id", userId).single(),
+  ])
 
-  return <IndividualMessagesClient userId={userId} initialMessages={messages || []} />
+  return (
+    <IndividualMessagesClient
+      userId={userId}
+      initialMessages={messages || []}
+      accountStatus={profile?.account_status || (profile?.is_active ? "active" : "suspended")}
+    />
+  )
 }

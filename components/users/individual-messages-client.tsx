@@ -31,10 +31,13 @@ interface Template {
 export function IndividualMessagesClient({
   userId,
   initialMessages,
+  accountStatus,
 }: {
   userId: string
   initialMessages: Message[]
+  accountStatus: "active" | "paused" | "suspended"
 }) {
+  const canSend = accountStatus === "active"
   const [messages, setMessages] = useState(initialMessages)
   const [phone, setPhone] = useState("")
   const [messageText, setMessageText] = useState("")
@@ -397,7 +400,7 @@ export function IndividualMessagesClient({
 
           <Button
             onClick={handleSend}
-            disabled={sending || !phone || !messageText || (templateHasImage && !selectedMediaId)}
+            disabled={!canSend || sending || !phone || !messageText || (templateHasImage && !selectedMediaId)}
             className="w-full bg-gradient-to-r from-emerald-500 to-blue-900 hover:from-emerald-600 hover:to-blue-950"
           >
             {sending ? "جاري الإرسال..." : "إرسال الرسالة"}

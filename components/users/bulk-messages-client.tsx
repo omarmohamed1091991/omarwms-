@@ -68,7 +68,14 @@ const countryNames = {
   EG: "مصر",
 }
 
-export default function BulkMessagesClient({ userId }: { userId: string }) {
+export default function BulkMessagesClient({
+  userId,
+  accountStatus,
+}: {
+  userId: string
+  accountStatus: "active" | "paused" | "suspended"
+}) {
+  const canSend = accountStatus === "active"
   const [templates, setTemplates] = useState<Template[]>([])
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null)
   const [selectedMedia, setSelectedMedia] = useState<MediaFile | null>(null)
@@ -882,8 +889,9 @@ export default function BulkMessagesClient({ userId }: { userId: string }) {
             size="lg"
             onClick={handleSendBulkMessages}
             disabled={
-              sendingStatus === "sending" ||
-              validNumbers.valid.length === 0 ||
+!canSend ||
+  sendingStatus === "sending" ||
+  validNumbers.valid.length === 0 ||
               !selectedTemplate ||
               !whatsappSettings?.whatsapp_access_token ||
               !whatsappSettings?.whatsapp_phone_number_id
