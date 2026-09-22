@@ -299,7 +299,14 @@ export default function UserDashboardClient({
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className={cn("flex items-center justify-between gap-4 rounded-2xl border px-5 py-4 shadow-sm", statusDetails.className)}>
+      <div
+        role="status"
+        aria-label={`حالة المستخدم: ${statusDetails.label}`}
+        className={cn(
+          "flex items-center justify-between gap-4 rounded-2xl border px-5 py-4 shadow-sm",
+          statusDetails.className,
+        )}
+      >
         <div className="flex items-center gap-3">
           <span className={cn("h-3 w-3 rounded-full shadow-sm", statusDetails.dotClassName)} aria-hidden="true" />
           <div>
