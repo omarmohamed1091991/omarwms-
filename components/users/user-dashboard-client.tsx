@@ -34,6 +34,7 @@ interface Message {
 }
 
 interface UserDashboardClientProps {
+  accountStatus: "active" | "paused" | "suspended"
   individualMessages: Message[]
   bulkMessages: any[]
   bulkRecipientsData: any[]
@@ -41,6 +42,7 @@ interface UserDashboardClientProps {
 }
 
 export default function UserDashboardClient({
+  accountStatus,
   individualMessages,
   bulkMessages,
   bulkRecipientsData,
@@ -273,9 +275,47 @@ export default function UserDashboardClient({
     },
   ]
 
+  const statusDetails = {
+    active: {
+      label: "نشط",
+      description: "الحساب يعمل بشكل طبيعي",
+      className: "border-emerald-200 bg-emerald-50 text-emerald-700",
+      dotClassName: "bg-emerald-500",
+    },
+    paused: {
+      label: "موقوف مؤقتاً",
+      description: "الحساب متوقف مؤقتاً من قبل الإدارة",
+      className: "border-amber-200 bg-amber-50 text-amber-700",
+      dotClassName: "bg-amber-500",
+    },
+    suspended: {
+      label: "غير نشط",
+      description: "الحساب متوقف من قبل الإدارة",
+      className: "border-red-200 bg-red-50 text-red-700",
+      dotClassName: "bg-red-500",
+    },
+  }[accountStatus]
+
   return (
     <div className="space-y-6">
       {/* Header */}
+      <div
+        role="status"
+        aria-label={`حالة المستخدم: ${statusDetails.label}`}
+        className={cn(
+          "flex items-center justify-between gap-4 rounded-2xl border px-5 py-4 shadow-sm",
+          statusDetails.className,
+        )}
+      >
+        <div className="flex items-center gap-3">
+          <span className={cn("h-3 w-3 rounded-full shadow-sm", statusDetails.dotClassName)} aria-hidden="true" />
+          <div>
+            <p className="text-sm font-bold">حالة الحساب: {statusDetails.label}</p>
+            <p className="mt-0.5 text-xs opacity-80">{statusDetails.description}</p>
+          </div>
+        </div>
+        <span className="rounded-full border border-current/20 px-3 py-1 text-xs font-semibold">حالة المستخدم</span>
+      </div>
       <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
         <div>
           <h2 className="text-3xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
