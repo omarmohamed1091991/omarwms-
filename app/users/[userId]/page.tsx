@@ -95,8 +95,15 @@ export default async function UserDashboard({ params }: { params: Promise<{ user
   const bulkMessageIds = bulkMessages.map((m: any) => m.id) || []
   const bulkRecipientsData = await fetchAllBulkRecipients(supabase, bulkMessageIds)
 
+  const { data: profile } = await supabase
+    .from("user_profiles")
+    .select("account_status, is_active")
+    .eq("id", userId)
+    .single()
+
   return (
     <UserDashboardClient
+      accountStatus={profile?.account_status || (profile?.is_active ? "active" : "suspended")}
       individualMessages={individualMessages || []}
       bulkMessages={bulkMessages || []}
       bulkRecipientsData={bulkRecipientsData || []}
