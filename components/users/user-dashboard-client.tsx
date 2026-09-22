@@ -278,19 +278,19 @@ export default function UserDashboardClient({
   const statusDetails = {
     active: {
       label: "نشط",
-      description: "يمكنك الإرسال",
+      description: "الحساب يعمل بشكل طبيعي",
       className: "border-emerald-200 bg-emerald-50 text-emerald-700",
       dotClassName: "bg-emerald-500",
     },
     paused: {
       label: "موقوف مؤقتاً",
-      description: "الرجاء التواصل مع الدعم الفني",
+      description: "الحساب متوقف مؤقتاً من قبل الإدارة",
       className: "border-amber-200 bg-amber-50 text-amber-700",
       dotClassName: "bg-amber-500",
     },
     suspended: {
       label: "غير نشط",
-      description: "الرجاء تجديد الاشتراك الشهري",
+      description: "الحساب متوقف من قبل الإدارة",
       className: "border-red-200 bg-red-50 text-red-700",
       dotClassName: "bg-red-500",
     },
