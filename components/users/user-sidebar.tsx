@@ -25,9 +25,10 @@ interface UserSidebarProps {
   userId: string
   userName: string
   userPhone?: string
+  accountStatus: "active" | "paused" | "suspended"
 }
 
-export function UserSidebar({ userId, userName, userPhone }: UserSidebarProps) {
+export function UserSidebar({ userId, userName, userPhone, accountStatus }: UserSidebarProps) {
   const pathname = usePathname()
   const router = useRouter()
   const [isOpen, setIsOpen] = useState(false)
@@ -128,7 +129,21 @@ export function UserSidebar({ userId, userName, userPhone }: UserSidebarProps) {
             {userName?.charAt(0) || "U"}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-gray-800 truncate">{userName}</p>
+            <div className="flex items-center gap-2 min-w-0">
+              <p className="text-sm font-semibold text-gray-800 truncate">{userName}</p>
+              <span
+                className={cn(
+                  "h-2.5 w-2.5 shrink-0 rounded-full ring-2 ring-white",
+                  accountStatus === "active"
+                    ? "bg-emerald-500"
+                    : accountStatus === "paused"
+                      ? "bg-amber-400"
+                      : "bg-red-500",
+                )}
+                title={accountStatus === "active" ? "نشط" : accountStatus === "paused" ? "موقوف مؤقتاً" : "غير نشط"}
+                aria-label={`حالة الحساب: ${accountStatus === "active" ? "نشط" : accountStatus === "paused" ? "موقوف مؤقتاً" : "غير نشط"}`}
+              />
+            </div>
             {userPhone && (
               <p className="text-xs text-gray-500 truncate" dir="ltr">
                 {userPhone}
