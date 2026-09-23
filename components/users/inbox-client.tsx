@@ -602,6 +602,17 @@ export function InboxClient({ userId, initialMessages = [] }: { userId: string; 
 
     try {
       const payload = JSON.parse(rawText)
+      const templateText =
+        payload.template_text ||
+        payload.templateText ||
+        payload.message_text ||
+        payload.body ||
+        payload.text
+
+      if (templateText && typeof templateText === "string") {
+        return templateText
+      }
+
       if (payload.template) {
         return `تم إرسال قالب: ${payload.template}`
       }
