@@ -596,6 +596,22 @@ export function InboxClient({ userId, initialMessages = [] }: { userId: string; 
     link.click()
   }
 
+  const getVisibleMessageText = (message: IncomingMessage) => {
+    const rawText = message.message_text || ""
+    if (!rawText.trim().startsWith("{")) return rawText
+
+    try {
+      const payload = JSON.parse(rawText)
+      if (payload.template) {
+        return `تم إرسال قالب: ${payload.template}`
+      }
+    } catch {
+      return rawText
+    }
+
+    return rawText
+  }
+
   const filteredConversations = conversations.filter((conv) => {
     const matchesFilter = filter === "all" ? true : filter === "unread" ? conv.unreadCount > 0 : conv.unreadCount === 0
     const matchesSearch =
@@ -917,7 +933,7 @@ export function InboxClient({ userId, initialMessages = [] }: { userId: string; 
                     <div className="flex items-center justify-between gap-2">
                       <p className="text-sm truncate" style={{ color: "#8696a0" }}>
                         {conv.lastMessage.direction === "outgoing" && "أنت: "}
-                        {conv.lastMessage.message_text || "رسالة وسائط"}
+                        {getVisibleMessageText(conv.lastMessage) || "رسالة وسائط"}
                       </p>
                       {conv.unreadCount > 0 && (
                         <div
@@ -1032,7 +1048,7 @@ export function InboxClient({ userId, initialMessages = [] }: { userId: string; 
                           color: "#ffffff",
                         }}
                       >
-                        <p className="text-sm whitespace-pre-wrap break-words">{msg.message_text}</p>
+                        <p className="text-sm whitespace-pre-wrap break-words">{getVisibleMessageText(msg)}</p>
                         <div
                           className={`flex items-center justify-end gap-1 mt-1 ${isOutgoing ? "text-[#ffffff99]" : "text-[#ffffff80]"}`}
                         >
