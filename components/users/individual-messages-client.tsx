@@ -50,6 +50,11 @@ export function IndividualMessagesClient({
   const [mediaLibrary, setMediaLibrary] = useState<any[]>([])
   const [showMediaSelector, setShowMediaSelector] = useState(false)
 
+  const getTemplateBodyText = (template: Template) => {
+    const body = template.components?.find((component) => component.type === "BODY")
+    return body?.text || template.name
+  }
+
   const countries = [
     { code: "966", name: "السعودية", flag: "🇸🇦" },
     { code: "971", name: "الإمارات", flag: "🇦🇪" },
@@ -171,14 +176,15 @@ export function IndividualMessagesClient({
         return
       }
 
-      const result = await sendIndividualMessage(
-        userId,
-        normalizedPhone,
-        messageText,
-        !!selectedTemplate,
-        selectedTemplate?.name,
-        selectedMediaId || undefined,
-      )
+  const result = await sendIndividualMessage(
+    userId,
+    normalizedPhone,
+    messageText,
+    !!selectedTemplate,
+    selectedTemplate?.name,
+    selectedMediaId || undefined,
+    selectedTemplate ? getTemplateBodyText(selectedTemplate) : undefined,
+  )
 
       if (result.success) {
         alert("✅ تم إرسال الرسالة بنجاح")
@@ -252,7 +258,7 @@ export function IndividualMessagesClient({
                     key={template.name}
                     onClick={() => {
                       setSelectedTemplate(template)
-                      setMessageText(getTemplatePreview())
+                      setMessageText(getTemplateBodyText(template))
                     }}
                     className={`p-3 rounded-lg border-2 text-right transition-all text-sm flex items-start justify-between ${
                       selectedTemplate?.name === template.name

@@ -8,7 +8,8 @@ export async function sendIndividualMessage(
   messageText: string,
   useTemplate = false,
   templateName?: string,
-  mediaId?: string, // إضافة معامل mediaId
+  mediaId?: string,
+  templateText?: string,
 ) {
   try {
     const supabase = createAdminClient()
@@ -123,7 +124,7 @@ export async function sendIndividualMessage(
     const { error: inboxError } = await supabase.from("incoming_messages").insert({
       user_id: userId,
       sender_phone: recipientPhone,
-      message_text: messageText,
+      message_text: templateText || messageText,
       direction: "outgoing",
       message_type: "text",
       is_read: true,
