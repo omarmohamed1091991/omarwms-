@@ -51,8 +51,8 @@ export function IndividualMessagesClient({
   const [showMediaSelector, setShowMediaSelector] = useState(false)
 
   const getTemplateBodyText = (template: Template) => {
-    const body = template.components?.find((component) => component.type === "BODY")
-    return body?.text || template.name
+    const body = template.components?.find((component) => component.type?.toUpperCase() === "BODY")
+    return body?.text?.trim() || getTemplatePreview().trim() || template.name
   }
 
   const countries = [

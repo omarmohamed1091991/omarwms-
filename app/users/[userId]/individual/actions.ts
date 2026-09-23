@@ -124,7 +124,7 @@ export async function sendIndividualMessage(
     const { error: inboxError } = await supabase.from("incoming_messages").insert({
       user_id: userId,
       sender_phone: recipientPhone,
-      message_text: templateText || messageText,
+      message_text: (templateText || messageText || "").trim(),
       direction: "outgoing",
       message_type: "text",
       is_read: true,
