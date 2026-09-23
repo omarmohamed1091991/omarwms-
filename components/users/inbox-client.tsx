@@ -379,18 +379,24 @@ export function InboxClient({ userId, initialMessages = [] }: { userId: string; 
     }
   }
 
+  function getLatestIncomingMessage(conversation: (typeof conversations)[number]) {
+    return conversation.messages
+      .filter((message) => (message.direction || "incoming") === "incoming")
+      .sort((a, b) => new Date(b.received_at).getTime() - new Date(a.received_at).getTime())[0]
+  }
+
   function exportSelectedToPDF() {
     const conversationsToExport = conversations.filter((c) => selectedForExport.includes(c.sender_phone))
-    if (conversationsToExport.length === 0) return
+    const rowsToExport = conversationsToExport
+      .map((conversation) => ({ ...conversation, latestMessage: getLatestIncomingMessage(conversation) }))
+      .filter((conversation) => conversation.latestMessage)
+    if (rowsToExport.length === 0) return
 
     const exportData = {
-      conversations: conversationsToExport.map((conv) => ({
-        sender_phone: conv.sender_phone,
-        sender_name: conv.sender_name,
-        messages: conv.messages.map((msg) => ({
-          ...msg,
-          direction: msg.direction || "incoming",
-        })),
+      conversations: rowsToExport.map((conversation) => ({
+        sender_phone: conversation.sender_phone,
+        sender_name: conversation.sender_name,
+        messages: [conversation.latestMessage],
       })),
     }
 
@@ -405,45 +411,35 @@ export function InboxClient({ userId, initialMessages = [] }: { userId: string; 
     const conversationsToExport = conversations.filter((c) => selectedForExport.includes(c.sender_phone))
     if (conversationsToExport.length === 0) return
 
-    const rows = [["اسم العميل", "رقم الجوال", "التاريخ", "الوقت", "الاتجاه", "نوع الرسالة", "محتوى الرسالة", "الحالة"]]
+    const rows = [["اسم العميل", "رقم الجوال", "نص آخر رسالة واردة", "تاريخ آخر رسالة واردة", "وقت آخر رسالة واردة"]]
 
     conversationsToExport.forEach((conv) => {
-      const displayName = conv.sender_name || formatPhoneNumber(conv.sender_phone)
-      const phoneNumber = formatPhoneNumber(conv.sender_phone)
+      const msg = getLatestIncomingMessage(conv)
+      if (!msg) return
 
-      conv.messages.forEach((msg) => {
-        const dateObj = new Date(msg.received_at)
-        const dateStr = dateObj.toLocaleDateString("ar-SA", {
-          year: "numeric",
-          month: "2-digit",
-          day: "2-digit",
-        })
-        const timeStr = dateObj.toLocaleTimeString("ar-SA", {
-          hour: "2-digit",
-          minute: "2-digit",
-          second: "2-digit",
-        })
-        const direction = msg.direction === "outgoing" ? "مُرسلة" : "واردة"
-        const messageType = msg.message_type || "text"
-        let messageContent = msg.message_text || ""
-
-        if (!messageContent && messageType !== "text") {
-          messageContent = `[رسالة ${messageType.toUpperCase()}]`
-        }
-
-        rows.push([
-          displayName,
-          phoneNumber,
-          dateStr,
-          timeStr,
-          direction,
-          messageType.toUpperCase(),
-          messageContent.replace(/"/g, '""'),
-          msg.is_read ? "مقروءة" : "غير مقروءة",
-        ])
+      const dateObj = new Date(msg.received_at)
+      const dateStr = dateObj.toLocaleDateString("ar-SA", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
       })
+      const timeStr = dateObj.toLocaleTimeString("ar-SA", {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+      })
+      let messageContent = msg.message_text || ""
+      if (!messageContent && msg.message_type !== "text") {
+        messageContent = `[رسالة ${(msg.message_type || "وسائط").toUpperCase()}]`
+      }
 
-      rows.push(["", "", "", "", "", "", "", ""])
+      rows.push([
+        conv.sender_name || formatPhoneNumber(conv.sender_phone),
+        formatPhoneNumber(conv.sender_phone),
+        messageContent.replace(/"/g, '""'),
+        dateStr,
+        timeStr,
+      ])
     })
 
     const csvContent =

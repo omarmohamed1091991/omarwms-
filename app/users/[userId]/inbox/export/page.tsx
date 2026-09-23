@@ -74,7 +74,15 @@ export default function ExportPage() {
     )
   }
 
-  const totalMessages = exportData.conversations.reduce((sum, conv) => sum + conv.messages.length, 0)
+  const latestConversations = exportData.conversations
+    .map((conversation) => ({
+      ...conversation,
+      latestMessage: conversation.messages
+        .filter((message) => (message.direction || "incoming") === "incoming")
+        .sort((a, b) => new Date(b.received_at).getTime() - new Date(a.received_at).getTime())[0],
+    }))
+    .filter((conversation) => conversation.latestMessage)
+  const totalMessages = latestConversations.length
   const totalPages = Math.ceil(totalMessages / 20)
 
   return (
@@ -108,42 +116,27 @@ export default function ExportPage() {
               <tr className="bg-slate-800 text-white">
                 <th className="p-3 text-right border border-slate-700 text-sm">الاسم</th>
                 <th className="p-3 text-right border border-slate-700 text-sm">رقم الجوال</th>
-                <th className="p-3 text-right border border-slate-700 text-sm">نص الرسالة الواردة</th>
-                <th className="p-3 text-right border border-slate-700 text-sm">التاريخ</th>
-                <th className="p-3 text-right border border-slate-700 text-sm">الوقت</th>
-                <th className="p-3 text-center border border-slate-700 text-sm">الحالة</th>
+                <th className="p-3 text-right border border-slate-700 text-sm">نص آخر رسالة واردة</th>
+                <th className="p-3 text-right border border-slate-700 text-sm">تاريخ آخر رسالة واردة</th>
+                <th className="p-3 text-right border border-slate-700 text-sm">وقت آخر رسالة واردة</th>
               </tr>
             </thead>
             <tbody>
-              {exportData.conversations.map((conversation) =>
-                conversation.messages.map((message, idx) => {
-                  const displayName = conversation.sender_name || formatPhoneNumber(conversation.sender_phone)
-                  const isRead = message.is_read
-
-                  return (
-                    <tr key={`${conversation.sender_phone}-${idx}`} className="border-b hover:bg-gray-50">
-                      <td className="p-3 border border-gray-200 text-sm">{displayName}</td>
-                      <td className="p-3 border border-gray-200 text-sm text-left" dir="ltr">
-                        {formatPhoneNumber(conversation.sender_phone)}
-                      </td>
-                      <td className="p-3 border border-gray-200 text-sm">
-                        {message.message_text || `رسالة ${message.message_type || "وسائط"}`}
-                      </td>
-                      <td className="p-3 border border-gray-200 text-sm">{formatDate(message.received_at)}</td>
-                      <td className="p-3 border border-gray-200 text-sm">{formatTime(message.received_at)}</td>
-                      <td className="p-3 border border-gray-200 text-center">
-                        <span
-                          className={`inline-block text-xs px-3 py-1 rounded-full font-bold ${
-                            isRead ? "bg-emerald-100 text-emerald-800" : "bg-yellow-100 text-yellow-800"
-                          }`}
-                        >
-                          {isRead ? "مقروء" : "غير مقروء"}
-                        </span>
-                      </td>
-                    </tr>
-                  )
-                }),
-              )}
+              {latestConversations.map((conversation) => {
+                const message = conversation.latestMessage
+                const displayName = conversation.sender_name || formatPhoneNumber(conversation.sender_phone)
+                return (
+                  <tr key={conversation.sender_phone} className="border-b hover:bg-gray-50">
+                    <td className="p-3 border border-gray-200 text-sm">{displayName}</td>
+                    <td className="p-3 border border-gray-200 text-sm text-left" dir="ltr">
+                      {formatPhoneNumber(conversation.sender_phone)}
+                    </td>
+                    <td className="p-3 border border-gray-200 text-sm">{message.message_text || `رسالة ${message.message_type || "وسائط"}`}</td>
+                    <td className="p-3 border border-gray-200 text-sm">{formatDate(message.received_at)}</td>
+                    <td className="p-3 border border-gray-200 text-sm">{formatTime(message.received_at)}</td>
+                  </tr>
+                )
+              })}
             </tbody>
           </table>
         </div>
