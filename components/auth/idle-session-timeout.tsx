@@ -4,7 +4,7 @@ import { useEffect, useRef } from "react"
 import { usePathname, useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 
-const IDLE_TIMEOUT_MS = 30 * 60 * 1000
+const IDLE_TIMEOUT_MS = 24 * 60 * 60 * 1000
 const ACTIVITY_THROTTLE_MS = 30 * 1000
 
 export function IdleSessionTimeout() {
