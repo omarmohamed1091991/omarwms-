@@ -92,12 +92,16 @@ export async function deleteUser(userId: string) {
   }
 }
 
-export async function updateUserStatus(userId: string, status: "active" | "paused" | "suspended") {
+export async function updateUserStatus(userId: string, status: "active" | "paused" | "suspended", activeUntil?: string | null) {
   try {
     const supabaseAdmin = createAdminClient()
     const { error } = await supabaseAdmin
       .from("user_profiles")
-      .update({ account_status: status, is_active: status === "active" })
+      .update({
+        account_status: status,
+        is_active: status === "active",
+        account_active_until: status === "active" ? activeUntil || null : null,
+      })
       .eq("id", userId)
 
     if (error) {

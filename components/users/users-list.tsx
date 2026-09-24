@@ -21,6 +21,7 @@ interface UserInterface {
   whatsapp_token: string | null
   is_active: boolean
   account_status: "active" | "paused" | "suspended"
+  account_active_until: string | null
   created_at: string
   role: "admin" | "user"
   email: string | null
@@ -43,6 +44,7 @@ export function UsersList({ users }: { users: UserInterface[] }) {
   const [deleting, setDeleting] = useState<string | null>(null)
   const [updatingRole, setUpdatingRole] = useState<string | null>(null)
   const [updatingStatus, setUpdatingStatus] = useState<string | null>(null)
+  const [activeUntilDraft, setActiveUntilDraft] = useState<Record<string, string>>({})
 
   const filteredUsers = users.filter(
     (user) =>
@@ -81,7 +83,7 @@ export function UsersList({ users }: { users: UserInterface[] }) {
 
   async function handleStatusChange(userId: string, status: "active" | "paused" | "suspended") {
     setUpdatingStatus(userId)
-    const result = await updateUserStatus(userId, status)
+    const result = await updateUserStatus(userId, status, status === "active" ? activeUntilDraft[userId] || null : null)
 
     if (result.success) {
       router.refresh()
@@ -241,6 +243,17 @@ export function UsersList({ users }: { users: UserInterface[] }) {
                           <SelectItem value="suspended" className="text-xs">غير نشط</SelectItem>
                         </SelectContent>
                       </Select>
+                      {user.account_status === "active" && (
+                        <Input
+                          type="date"
+                          value={activeUntilDraft[user.id] || user.account_active_until?.slice(0, 10) || ""}
+                          onChange={(event) => setActiveUntilDraft((current) => ({ ...current, [user.id]: event.target.value }))}
+                          onBlur={() => handleStatusChange(user.id, "active")}
+                          min={new Date().toISOString().slice(0, 10)}
+                          className="mt-1 h-7 text-[11px] rounded-lg"
+                          aria-label="نشط حتى تاريخ"
+                        />
+                      )}
                     </div>
 
                     <div className="mb-2" onClick={(e) => e.stopPropagation()}>
