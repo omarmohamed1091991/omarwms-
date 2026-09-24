@@ -13,14 +13,14 @@ export default async function IndividualMessagesPage({ params }: { params: Promi
       .select("*")
       .eq("user_id", userId)
       .order("created_at", { ascending: false }),
-    supabase.from("user_profiles").select("account_status, is_active").eq("id", userId).single(),
+    supabase.from("user_profiles").select("account_status, is_active, account_active_until").eq("id", userId).single(),
   ])
 
   return (
     <IndividualMessagesClient
       userId={userId}
       initialMessages={messages || []}
-      accountStatus={profile?.account_status || (profile?.is_active ? "active" : "suspended")}
+      accountStatus={profile?.account_status === "active" && profile?.account_active_until && new Date(profile.account_active_until) < new Date() ? "suspended" : profile?.account_status || (profile?.is_active ? "active" : "suspended")}
     />
   )
 }

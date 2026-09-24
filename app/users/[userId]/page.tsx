@@ -97,13 +97,14 @@ export default async function UserDashboard({ params }: { params: Promise<{ user
 
   const { data: profile } = await supabase
     .from("user_profiles")
-    .select("account_status, is_active")
+    .select("account_status, is_active, account_active_until")
     .eq("id", userId)
     .single()
 
   return (
     <UserDashboardClient
-      accountStatus={profile?.account_status || (profile?.is_active ? "active" : "suspended")}
+      accountStatus={profile?.account_status === "active" && profile?.account_active_until && new Date(profile.account_active_until) < new Date() ? "suspended" : profile?.account_status || (profile?.is_active ? "active" : "suspended")}
+      accountActiveUntil={profile?.account_active_until || null}
       individualMessages={individualMessages || []}
       bulkMessages={bulkMessages || []}
       bulkRecipientsData={bulkRecipientsData || []}

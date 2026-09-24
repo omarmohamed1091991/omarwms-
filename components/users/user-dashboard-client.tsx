@@ -35,6 +35,7 @@ interface Message {
 
 interface UserDashboardClientProps {
   accountStatus: "active" | "paused" | "suspended"
+  accountActiveUntil: string | null
   individualMessages: Message[]
   bulkMessages: any[]
   bulkRecipientsData: any[]
@@ -43,6 +44,7 @@ interface UserDashboardClientProps {
 
 export default function UserDashboardClient({
   accountStatus,
+  accountActiveUntil,
   individualMessages,
   bulkMessages,
   bulkRecipientsData,
@@ -311,7 +313,12 @@ export default function UserDashboardClient({
           <span className={cn("h-3 w-3 rounded-full shadow-sm", statusDetails.dotClassName)} aria-hidden="true" />
           <div>
             <p className="text-sm font-bold">حالة الحساب: {statusDetails.label}</p>
-            <p className="mt-0.5 text-xs opacity-80">{statusDetails.description}</p>
+            <p className="mt-0.5 text-xs opacity-80">
+              {statusDetails.description}
+              {accountStatus === "active" && accountActiveUntil
+                ? ` حتى ${new Date(accountActiveUntil).toLocaleDateString("ar-SA")}`
+                : ""}
+            </p>
           </div>
         </div>
         <span className="rounded-full border border-current/20 px-3 py-1 text-xs font-semibold">حالة المستخدم</span>
