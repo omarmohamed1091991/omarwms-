@@ -3,6 +3,7 @@ import type { Metadata } from "next"
 import { Geist, Geist_Mono, Tajawal } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import "./globals.css"
+import { IdleSessionTimeout } from "@/components/auth/idle-session-timeout"
 
 const _geist = Geist({ subsets: ["latin"] })
 const _geistMono = Geist_Mono({ subsets: ["latin"] })
@@ -29,6 +30,7 @@ export default function RootLayout({
   return (
     <html lang="ar" dir="rtl" className="bg-background">
       <body className={`${tajawal.className} antialiased`}>
+        <IdleSessionTimeout />
         {children}
         <Analytics />
       </body>
