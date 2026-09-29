@@ -29,6 +29,7 @@ export default async function UserLayout({
         userName={user.full_name || user.phone_number}
         userPhone={user.phone_number}
         accountStatus={user.account_status === "active" && user.account_active_until && new Date(user.account_active_until) < new Date() ? "suspended" : user.account_status || (user.is_active ? "active" : "suspended")}
+        isAdmin={user.role === "admin"}
       />
 
       {/* Main Content - يبدأ مباشرة بعد الـ sidebar */}
