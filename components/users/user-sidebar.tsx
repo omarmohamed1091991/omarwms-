@@ -26,9 +26,10 @@ interface UserSidebarProps {
   userName: string
   userPhone?: string
   accountStatus: "active" | "paused" | "suspended"
+  isAdmin: boolean
 }
 
-export function UserSidebar({ userId, userName, userPhone, accountStatus }: UserSidebarProps) {
+export function UserSidebar({ userId, userName, userPhone, accountStatus, isAdmin }: UserSidebarProps) {
   const pathname = usePathname()
   const router = useRouter()
   const [isOpen, setIsOpen] = useState(false)
@@ -90,6 +91,8 @@ export function UserSidebar({ userId, userName, userPhone, accountStatus }: User
       bgHover: "hover:bg-slate-50",
     },
   ]
+
+  const visibleNavItems = isAdmin ? navItems : navItems.filter((item) => item.href !== `/users/${userId}/settings`)
 
   const handleLogout = async () => {
     const supabase = createClient()
@@ -155,7 +158,7 @@ export function UserSidebar({ userId, userName, userPhone, accountStatus }: User
 
       {/* Navigation Links */}
       <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
-        {navItems.map((item, index) => {
+        {visibleNavItems.map((item, index) => {
           const Icon = item.icon
           const isActive = item.exact ? pathname === item.href : pathname.startsWith(item.href)
 
