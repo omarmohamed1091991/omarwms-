@@ -76,6 +76,8 @@ export default function BulkMessagesClient({
   accountStatus: "active" | "paused" | "suspended"
 }) {
   const canSend = accountStatus === "active"
+  const getMediaPreviewUrl = (mediaId: string) =>
+    `/api/media-proxy?media_id=${encodeURIComponent(mediaId)}&user_id=${encodeURIComponent(userId)}`
   const [templates, setTemplates] = useState<Template[]>([])
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null)
   const [selectedMedia, setSelectedMedia] = useState<MediaFile | null>(null)
@@ -421,7 +423,7 @@ export default function BulkMessagesClient({
                 })
               }
             } catch (e) {
-              // تجاهل أخطاء التحليل
+              // تجا��ل أخطاء التحليل
             }
           }
         }
@@ -633,7 +635,7 @@ export default function BulkMessagesClient({
                     <div className="flex items-center gap-3 bg-white p-3 rounded-lg border-2 border-teal-300">
                       <div className="w-16 h-16 relative rounded-lg overflow-hidden border border-teal-200">
                         <img
-                          src={`/api/media-proxy?media_id=${selectedMedia.media_id}&user_id=${userId}`}
+                          src={getMediaPreviewUrl(selectedMedia.media_id)}
                           alt={selectedMedia.file_name || "صورة"}
                           className="w-full h-full object-cover"
                         />
@@ -694,7 +696,7 @@ export default function BulkMessagesClient({
                             }`}
                           >
                             <img
-                              src={`/api/media-proxy?media_id=${item.media_id}&user_id=${userId}`}
+                              src={getMediaPreviewUrl(item.media_id)}
                               alt={item.file_name || "صورة"}
                               className="w-full h-full object-cover rounded"
                               onError={(e) => {

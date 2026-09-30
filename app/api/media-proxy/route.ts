@@ -75,7 +75,7 @@ export async function GET(request: Request) {
     return new NextResponse(imageBuffer, {
       headers: {
         "Content-Type": mediaInfo.mime_type || "image/jpeg",
-        "Cache-Control": "public, max-age=86400", // Cache for 24 hours
+        "Cache-Control": "private, no-store",
       },
     })
   } catch (error) {

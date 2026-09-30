@@ -32,10 +32,8 @@ export default function MediaLibraryClient({ userId }: { userId: string }) {
     loadMedia()
   }, [])
 
-  const getProxyImageUrl = (mediaId: string, mediaUrl?: string | null) => {
-    if (mediaUrl?.startsWith("http")) return mediaUrl
-    return `/api/media-proxy?media_id=${encodeURIComponent(mediaId)}&user_id=${encodeURIComponent(userId)}`
-  }
+  const getProxyImageUrl = (mediaId: string) =>
+    `/api/media-proxy?media_id=${encodeURIComponent(mediaId)}&user_id=${encodeURIComponent(userId)}`
 
   const loadMedia = async () => {
     setLoading(true)
@@ -226,7 +224,7 @@ export default function MediaLibraryClient({ userId }: { userId: string }) {
                 <div className="aspect-square bg-gray-100 relative overflow-hidden">
                   {item.media_type === "image" ? (
                     <img
-                      src={getProxyImageUrl(item.media_id, item.media_url) || "/placeholder.svg"}
+                      src={getProxyImageUrl(item.media_id)}
                       alt={item.file_name || "صورة"}
                       className="w-full h-full object-cover"
                       loading="lazy"
