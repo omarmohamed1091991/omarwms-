@@ -15,11 +15,22 @@ export async function GET(request: Request) {
 
     const supabase = await createClient()
 
-    // Get user's WhatsApp token
+    const { data: mediaRecord } = await supabase
+      .from("media_library")
+      .select("media_id, user_id")
+      .eq("media_id", mediaId)
+      .eq("user_id", userId)
+      .maybeSingle()
+
+    if (!mediaRecord) {
+      return new NextResponse("Media not found", { status: 404 })
+    }
+
+    // Get the token belonging to the same user who owns this media record.
     const { data: userProfile } = await supabase
       .from("user_profiles")
       .select("whatsapp_access_token")
-      .eq("id", userId)
+      .eq("id", mediaRecord.user_id)
       .single()
 
     if (!userProfile?.whatsapp_access_token) {
