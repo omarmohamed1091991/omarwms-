@@ -1055,6 +1055,14 @@ export function InboxClient({ userId, initialMessages = [] }: { userId: string; 
                           color: "#ffffff",
                         }}
                       >
+                        {msg.media_url && (
+                          <img
+                            src={msg.media_url.startsWith("http") ? msg.media_url : `/api/media-proxy?media_id=${encodeURIComponent(msg.media_url)}&user_id=${encodeURIComponent(userId)}`}
+                            alt="الصورة المرفقة"
+                            className="mb-2 max-h-64 w-full rounded-md object-contain"
+                            loading="lazy"
+                          />
+                        )}
                         <p className="text-sm whitespace-pre-wrap break-words">{getVisibleMessageText(msg)}</p>
                         <div
                           className={`flex items-center justify-end gap-1 mt-1 ${isOutgoing ? "text-[#ffffff99]" : "text-[#ffffff80]"}`}
