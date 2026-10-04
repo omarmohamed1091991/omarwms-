@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Trash2, Phone, Search, Settings, Calendar, Shield, User, Sparkles } from "lucide-react"
-import { deleteUser, updateUserRole, updateUserStatus } from "@/app/actions/users"
+import { deleteUser, updateUserRole, updateUserStatus, updateSubscriptionPrice } from "@/app/actions/users"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -22,6 +22,8 @@ interface UserInterface {
   is_active: boolean
   account_status: "active" | "paused" | "suspended"
   account_active_until: string | null
+  subscription_price_cents: number
+  subscription_expires_at: string | null
   created_at: string
   role: "admin" | "user"
   email: string | null
@@ -45,6 +47,7 @@ export function UsersList({ users }: { users: UserInterface[] }) {
   const [updatingRole, setUpdatingRole] = useState<string | null>(null)
   const [updatingStatus, setUpdatingStatus] = useState<string | null>(null)
   const [activeUntilDraft, setActiveUntilDraft] = useState<Record<string, string>>({})
+  const [subscriptionPriceDraft, setSubscriptionPriceDraft] = useState<Record<string, string>>({})
 
   const filteredUsers = users.filter(
     (user) =>
@@ -79,6 +82,13 @@ export function UsersList({ users }: { users: UserInterface[] }) {
       alert(result.error || "حدث خطأ أثناء تحديث الصلاحيات")
     }
     setUpdatingRole(null)
+  }
+
+  async function handleSubscriptionPriceChange(userId: string, value: string) {
+    setSubscriptionPriceDraft((current) => ({ ...current, [userId]: value }))
+    const result = await updateSubscriptionPrice(userId, value)
+    if (!result.success) alert(result.error)
+    else router.refresh()
   }
 
   async function handleStatusChange(userId: string, status: "active" | "paused" | "suspended") {
@@ -228,6 +238,20 @@ export function UsersList({ users }: { users: UserInterface[] }) {
                       </div>
                     </div>
 
+                    {user.role !== "admin" && (
+                      <div className="mb-2" onClick={(e) => e.stopPropagation()}>
+                        <Input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={subscriptionPriceDraft[user.id] ?? ((user.subscription_price_cents || 0) / 100).toFixed(2)}
+                          onChange={(event) => handleSubscriptionPriceChange(user.id, event.target.value)}
+                          className="h-7 text-[11px] rounded-lg"
+                          aria-label="سعر الاشتراك الشهري بالريال"
+                          placeholder="سعر الاشتراك الشهري بالريال"
+                        />
+                      </div>
+                    )}
                     <div className="mb-2" onClick={(e) => e.stopPropagation()}>
                       <Select
                         value={user.account_status}

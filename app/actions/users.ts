@@ -92,6 +92,14 @@ export async function deleteUser(userId: string) {
   }
 }
 
+export async function updateSubscriptionPrice(userId: string, priceSar: string) {
+  const amount = Number(priceSar)
+  if (!Number.isFinite(amount) || amount < 0) return { success: false, error: "السعر غير صالح" }
+  const supabase = createAdminClient()
+  const { error } = await supabase.from("user_profiles").update({ subscription_price_cents: Math.round(amount * 100) }).eq("id", userId)
+  return error ? { success: false, error: "تعذر حفظ سعر الاشتراك" } : { success: true }
+}
+
 export async function updateUserStatus(userId: string, status: "active" | "paused" | "suspended", activeUntil?: string | null) {
   try {
     const supabaseAdmin = createAdminClient()
