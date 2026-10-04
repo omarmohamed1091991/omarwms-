@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { RenewSubscriptionButton } from "@/components/subscription/renew-subscription-button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
@@ -36,6 +37,8 @@ interface Message {
 interface UserDashboardClientProps {
   accountStatus: "active" | "paused" | "suspended"
   accountActiveUntil: string | null
+  subscriptionExpiresAt: string | null
+  subscriptionPriceCents: number
   individualMessages: Message[]
   bulkMessages: any[]
   bulkRecipientsData: any[]
@@ -45,6 +48,8 @@ interface UserDashboardClientProps {
 export default function UserDashboardClient({
   accountStatus,
   accountActiveUntil,
+  subscriptionExpiresAt,
+  subscriptionPriceCents,
   individualMessages,
   bulkMessages,
   bulkRecipientsData,
@@ -321,7 +326,10 @@ export default function UserDashboardClient({
             </p>
           </div>
         </div>
-        <span className="rounded-full border border-current/20 px-3 py-1 text-xs font-semibold">حالة المستخدم</span>
+  <div className="flex items-center gap-2">
+    {subscriptionPriceCents > 0 && <RenewSubscriptionButton />}
+    <span className="rounded-full border border-current/20 px-3 py-1 text-xs font-semibold">حالة المستخدم</span>
+  </div>
       </div>
       <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
         <div>
