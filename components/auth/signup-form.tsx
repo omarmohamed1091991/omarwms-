@@ -10,13 +10,13 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { AlertCircle, CheckCircle2, Loader2, UserPlus } from "lucide-react"
+import { AlertCircle, Loader2, UserPlus } from "lucide-react"
+import { registerUser } from "@/app/actions/register"
 
 export function SignupForm({ next }: { next?: string }) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [checkEmail, setCheckEmail] = useState(false)
   const [form, setForm] = useState({ full_name: "", phone_number: "", email: "", password: "" })
 
   async function handleSubmit(e: React.FormEvent) {
@@ -25,44 +25,25 @@ export function SignupForm({ next }: { next?: string }) {
     setLoading(true)
     setError(null)
     try {
+      const result = await registerUser(form)
+      if (!result.success) {
+        setError(result.error)
+        setLoading(false)
+        return
+      }
+      // الحساب مفعل مباشرة، لذا نسجّل الدخول تلقائياً.
       const supabase = createClient()
-      const destination = next || "/#pricing"
-      const { data, error: signUpError } = await supabase.auth.signUp({
-        email: form.email,
-        password: form.password,
-        options: {
-          data: { full_name: form.full_name, phone_number: form.phone_number },
-          emailRedirectTo: `${window.location.origin}/auth/login?next=${encodeURIComponent(destination)}`,
-        },
-      })
-      if (signUpError) {
-        setError(signUpError.message.includes("registered") ? "هذا البريد مسجل بالفعل، يرجى تسجيل الدخول" : "تعذر إنشاء الحساب، حاول مرة أخرى")
-        setLoading(false)
+      const { error: signInError } = await supabase.auth.signInWithPassword({ email: form.email.trim().toLowerCase(), password: form.password })
+      if (signInError) {
+        router.push(next ? `/auth/login?next=${encodeURIComponent(next)}` : "/auth/login")
         return
       }
-      if (!data.session) {
-        setCheckEmail(true)
-        setLoading(false)
-        return
-      }
-      router.push(next || `/users/${data.user!.id}/subscription`)
+      router.push(next || `/users/${result.userId}`)
       router.refresh()
     } catch {
       setError("تعذر الاتصال بالخادم، حاول مرة أخرى")
       setLoading(false)
     }
-  }
-
-  if (checkEmail) {
-    return (
-      <Card className="border-0 shadow-xl">
-        <CardContent className="py-10 text-center">
-          <CheckCircle2 className="w-12 h-12 text-emerald-600 mx-auto mb-3" />
-          <p className="font-bold text-gray-900 mb-1">تم إنشاء حسابك</p>
-          <p className="text-sm text-gray-600">أرسلنا رابط تفعيل إلى بريدك الإلكتروني. فعّل حسابك ثم سجّل الدخول لإتمام الاشتراك.</p>
-        </CardContent>
-      </Card>
-    )
   }
 
   const field = (key: keyof typeof form, label: string, type = "text", ltr = false) => (
@@ -87,7 +68,7 @@ export function SignupForm({ next }: { next?: string }) {
     <Card className="border-0 shadow-xl">
       <CardHeader className="space-y-1 pb-6">
         <CardTitle className="text-xl font-bold text-center">إنشاء حساب جديد</CardTitle>
-        <CardDescription className="text-center text-sm">سجّل بياناتك للاشتراك في إحدى الباقات</CardDescription>
+        <CardDescription className="text-center text-sm">أنشئ حسابك وابدأ مباشرة بدون رسالة تفعيل</CardDescription>
       </CardHeader>
       <CardContent>
         {error && (
