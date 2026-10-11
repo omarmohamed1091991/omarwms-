@@ -1,41 +1,61 @@
 import { NextResponse } from "next/server"
-import { createClient } from "@/lib/supabase/server"
-import { createAdminClient } from "@/lib/supabase/admin"
+import { desc, eq, isNotNull, and } from "drizzle-orm"
+import { db } from "@/db"
+import { subscriptions } from "@/db/schema"
+import { getSessionUser } from "@/lib/auth"
 import { getStripe } from "@/lib/stripe"
+import { CURRENCIES, getPlan, planPrice, siteOrigin, type Currency } from "@/lib/billing"
 
-export async function POST() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: "غير مصرح" }, { status: 401 })
+export async function POST(request: Request) {
+  const user = await getSessionUser()
+  if (!user) return NextResponse.json({ error: "يرجى تسجيل الدخول أولاً" }, { status: 401 })
 
-  const admin = createAdminClient()
-  const { data: profile, error } = await admin
-    .from("user_profiles")
-    .select("id, email, full_name, subscription_price_cents, subscription_expires_at")
-    .eq("id", user.id)
-    .single()
-
-  if (error || !profile || profile.subscription_price_cents <= 0) {
-    return NextResponse.json({ error: "لم يتم تحديد سعر الاشتراك لهذا الحساب" }, { status: 400 })
+  const body = await request.json().catch(() => ({}))
+  const currency = (body.currency in CURRENCIES ? body.currency : "egp") as Currency
+  const plan = await getPlan(Number(body.planId))
+  if (!plan || !plan.isActive) return NextResponse.json({ error: "الخطة غير متاحة" }, { status: 404 })
+  if (!body.acceptedTerms) {
+    return NextResponse.json({ error: "يجب الموافقة على الشروط وسياسة الاسترجاع" }, { status: 400 })
   }
 
-  const stripe = getStripe()
-  const origin = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || new URL(process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL || "http://localhost:3000").origin
-  const session = await stripe.checkout.sessions.create({
-    mode: "payment",
-    customer_email: profile.email || user.email,
-    line_items: [{
-      price_data: {
-        currency: "sar",
-        product_data: { name: "تجديد الاشتراك الشهري" },
-        unit_amount: profile.subscription_price_cents,
-      },
-      quantity: 1,
-    }],
-    metadata: { userId: profile.id, type: "monthly_subscription" },
-    success_url: `${origin}/dashboard?subscription=success`,
-    cancel_url: `${origin}/dashboard?subscription=cancelled`,
-  })
+  try {
+    const stripe = getStripe()
 
-  return NextResponse.json({ url: session.url })
+    // إعادة استخدام عميل Stripe نفسه للمستخدم حتى تظهر كل الفواتير في مكان واحد.
+    const [existing] = await db
+      .select({ customerId: subscriptions.stripeCustomerId })
+      .from(subscriptions)
+      .where(and(eq(subscriptions.userId, user.id), isNotNull(subscriptions.stripeCustomerId)))
+      .orderBy(desc(subscriptions.createdAt))
+      .limit(1)
+
+    const metadata = { userId: user.id, planId: String(plan.id), planName: plan.name, type: "plan_subscription" }
+    const origin = siteOrigin(request)
+    const session = await stripe.checkout.sessions.create({
+      mode: "subscription",
+      ...(existing?.customerId ? { customer: existing.customerId } : { customer_email: user.email || undefined }),
+      client_reference_id: user.id,
+      line_items: [
+        {
+          quantity: 1,
+          price_data: {
+            currency,
+            unit_amount: planPrice(plan, currency),
+            recurring: { interval: plan.interval === "year" ? "year" : "month" },
+            product_data: { name: `o-wms – ${plan.name}${plan.nameEn ? ` (${plan.nameEn})` : ""}` },
+          },
+        },
+      ],
+      metadata,
+      subscription_data: { metadata },
+      locale: "auto",
+      success_url: `${origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${origin}/checkout/${plan.id}?cancelled=1`,
+    })
+
+    return NextResponse.json({ url: session.url })
+  } catch (error) {
+    console.error("[checkout] Failed to create session:", error)
+    return NextResponse.json({ error: "تعذر إنشاء جلسة الدفع، يرجى المحاولة لاحقاً" }, { status: 500 })
+  }
 }

@@ -16,6 +16,7 @@ import {
   MessageSquareText,
   Menu,
   Home,
+  CreditCard,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { createClient } from "@/lib/supabase/client"
@@ -82,6 +83,13 @@ export function UserSidebar({ userId, userName, userPhone, accountStatus, isAdmi
       icon: Images,
       gradient: "from-amber-500 to-amber-600",
       bgHover: "hover:bg-amber-50",
+    },
+    {
+      href: `/users/${userId}/subscription`,
+      label: "الاشتراك والفواتير",
+      icon: CreditCard,
+      gradient: "from-emerald-500 to-green-600",
+      bgHover: "hover:bg-emerald-50",
     },
     {
       href: `/users/${userId}/settings`,
