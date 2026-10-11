@@ -29,6 +29,7 @@ export const subscriptions = pgTable(
     amountCents: integer("amount_cents").notNull(),
     interval: text().notNull().default("month"),
     status: text().notNull().default("incomplete"),
+    provider: text().notNull().default("stripe"), // stripe | paymob
     stripeCustomerId: text("stripe_customer_id"),
     stripeSubscriptionId: text("stripe_subscription_id").unique(),
     currentPeriodEnd: timestamp("current_period_end", { withTimezone: true }),
@@ -50,13 +51,38 @@ export const payments = pgTable(
     amountCents: integer("amount_cents").notNull(),
     currency: text().notNull(),
     status: text().notNull(),
+    provider: text().notNull().default("stripe"), // stripe | paymob
     stripeInvoiceId: text("stripe_invoice_id").unique(),
+    paymobTransactionId: text("paymob_transaction_id").unique(),
     invoiceUrl: text("invoice_url"),
     paidAt: timestamp("paid_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [index("payments_user_id_idx").on(t.userId)],
 )
 
+// جلسات دفع Paymob (دفعة واحدة لكل فترة). تُنشأ قبل التحويل لصفحة Paymob وتُحدَّث عند تأكيد العملية.
+export const paymobSessions = pgTable(
+  "paymob_sessions",
+  {
+    id: serial().primaryKey(),
+    reference: text().notNull().unique(), // special_reference المرسل إلى Paymob
+    userId: text("user_id").notNull(),
+    planId: integer("plan_id").references(() => pricingPlans.id, { onDelete: "set null" }),
+    planName: text("plan_name").notNull(),
+    currency: text().notNull(), // egp | sar
+    amountCents: integer("amount_cents").notNull(),
+    interval: text().notNull().default("month"),
+    status: text().notNull().default("pending"), // pending | paid | failed
+    intentionId: text("intention_id"),
+    paymobOrderId: text("paymob_order_id"),
+    paymobTransactionId: text("paymob_transaction_id"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("paymob_sessions_user_id_idx").on(t.userId), index("paymob_sessions_order_idx").on(t.paymobOrderId)],
+)
+
 export type PricingPlan = typeof pricingPlans.$inferSelect
 export type Subscription = typeof subscriptions.$inferSelect
 export type Payment = typeof payments.$inferSelect
+export type PaymobSession = typeof paymobSessions.$inferSelect

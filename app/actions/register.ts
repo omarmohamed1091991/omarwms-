@@ -4,7 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin"
 
 type RegisterResult = { success: true; userId: string } | { success: false; error: string }
 
-// تسجيل عام لأي زائر: ينشئ الحساب مفعلاً مباشرة (بدون رسالة تفعيل) بنفس طريقة إضافة الأدمن للمستخدم.
+// تسجيل عام لأي زائر: ينشئ الحساب مؤكداً مباشرة (بدون رسالة تفعيل) بنفس طريقة إضافة الأدمن للمستخدم.
 export async function registerUser(input: {
   full_name: string
   phone_number: string
@@ -51,8 +51,10 @@ export async function registerUser(input: {
         phone_number,
         email,
         role: "user",
-        is_active: true,
-        account_status: "active",
+        // الحساب يبدأ غير نشط حتى يشترك المستخدم أو يجدد اشتراكه.
+        is_active: false,
+        account_status: "suspended",
+        account_active_until: null,
       },
       { onConflict: "id" },
     )

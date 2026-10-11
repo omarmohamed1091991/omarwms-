@@ -1,7 +1,7 @@
 import type Stripe from "stripe"
-import { and, asc, desc, eq, inArray, ne } from "drizzle-orm"
+import { and, asc, desc, eq, gt, inArray, isNull, ne, or } from "drizzle-orm"
 import { db } from "@/db"
-import { payments, pricingPlans, subscriptions, type PricingPlan } from "@/db/schema"
+import { payments, pricingPlans, subscriptions, type PricingPlan, type Subscription } from "@/db/schema"
 import { createAdminClient } from "@/lib/supabase/admin"
 
 export const CURRENCIES = {
@@ -27,6 +27,14 @@ export const SUBSCRIPTION_STATUS: Record<string, { label: string; className: str
 }
 
 export const LIVE_STATUSES = ["active", "trialing", "past_due"]
+export const ENDED_STATUSES = ["canceled", "unpaid", "incomplete_expired"]
+
+/** اشتراكات Paymob (دفعة لكل فترة) تبقى "active" في السجل، لذلك نعتبرها منتهية بعد تاريخ نهاية الفترة. */
+export function isSubscriptionLive(sub: Pick<Subscription, "status" | "provider" | "currentPeriodEnd"> | null | undefined) {
+  if (!sub || !LIVE_STATUSES.includes(sub.status)) return false
+  if (sub.provider === "paymob") return !!sub.currentPeriodEnd && sub.currentPeriodEnd > new Date()
+  return true
+}
 
 export function formatMoney(cents: number, currency: string) {
   const c = CURRENCIES[currency as Currency]
@@ -141,6 +149,26 @@ export async function syncStripeSubscription(stripeSub: Stripe.Subscription) {
         is_active: true,
       })
       .eq("id", userId)
+  } else if (ENDED_STATUSES.includes(stripeSub.status)) {
+    // انتهى الاشتراك: يعود الحساب غير نشط ما لم يكن لدى المستخدم اشتراك آخر سارٍ.
+    const [otherLive] = await db
+      .select({ id: subscriptions.id })
+      .from(subscriptions)
+      .where(
+        and(
+          eq(subscriptions.userId, userId),
+          or(ne(subscriptions.stripeSubscriptionId, stripeSub.id), isNull(subscriptions.stripeSubscriptionId)),
+          inArray(subscriptions.status, LIVE_STATUSES),
+          or(isNull(subscriptions.currentPeriodEnd), gt(subscriptions.currentPeriodEnd, new Date())),
+        ),
+      )
+      .limit(1)
+    if (!otherLive) {
+      await createAdminClient()
+        .from("user_profiles")
+        .update({ account_status: "suspended", is_active: false })
+        .eq("id", userId)
+    }
   }
 
   return row
