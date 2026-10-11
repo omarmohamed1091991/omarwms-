@@ -7,7 +7,6 @@ import {
   Zap,
   Shield,
   LogIn,
-  LogOut,
   User,
   BarChart3,
   Inbox,
@@ -16,6 +15,9 @@ import {
   ImageIcon,
 } from "lucide-react"
 import { createClient } from "@/lib/supabase/server"
+import { SiteHeader } from "@/components/marketing/site-header"
+import { SiteFooter } from "@/components/marketing/site-footer"
+import { PricingSection } from "@/components/marketing/pricing-section"
 
 export default async function Home() {
   const supabase = await createClient()
@@ -31,46 +33,7 @@ export default async function Home() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-emerald-50/40 to-green-50/40">
-      {/* Header */}
-      <header className="border-b bg-white/80 backdrop-blur-md sticky top-0 z-50">
-        <div className="container mx-auto px-6 max-w-7xl py-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Image src="/logo.png" alt="o-wms" width={48} height={48} className="w-12 h-12" />
-              <div>
-                <h1 className="text-base font-semibold text-gray-900">o-wms</h1>
-                <p className="text-xs text-gray-500">نظام واتساب احترافي</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              {user && profile ? (
-                <form
-                  action={async () => {
-                    "use server"
-                    const supabase = await createClient()
-                    await supabase.auth.signOut()
-                  }}
-                >
-                  <button
-                    type="submit"
-                    className="flex items-center gap-1.5 text-xs h-9 px-4 bg-transparent border border-red-200 text-red-600 hover:bg-red-50 rounded-lg transition-all"
-                  >
-                    <LogOut className="w-3.5 h-3.5" />
-                    تسجيل الخروج
-                  </button>
-                </form>
-              ) : (
-                <Link href="/auth/login">
-                  <button className="flex items-center gap-1.5 text-xs h-9 px-4 bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white rounded-lg transition-all">
-                    <LogIn className="w-3.5 h-3.5" />
-                    تسجيل الدخول
-                  </button>
-                </Link>
-              )}
-            </div>
-          </div>
-        </div>
-      </header>
+      <SiteHeader />
 
       {/* Hero Section */}
       <section className="relative overflow-hidden">
@@ -87,13 +50,13 @@ export default async function Home() {
               o-wms
             </div>
 
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4 leading-tight">
+            <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4 leading-tight">
               نظام إدارة رسائل واتساب
               <span className="bg-gradient-to-r from-emerald-600 to-green-700 bg-clip-text text-transparent">
                 {" "}
                 الاحترافي
               </span>
-            </h2>
+            </h1>
 
             <p className="text-base text-gray-600 mb-10 leading-relaxed">
               منصة متكاملة لإدارة المستخدمين وإرسال الرسائل الفردية والجماعية مع لوحة تحكم منفصلة لكل مستخدم
@@ -228,6 +191,20 @@ export default async function Home() {
                     </div>
                   </div>
                 </Link>
+                <div className="flex flex-wrap items-center justify-center gap-3 text-sm">
+                  <Link
+                    href="/auth/signup"
+                    className="h-10 px-5 leading-10 rounded-lg bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white"
+                  >
+                    إنشاء حساب جديد
+                  </Link>
+                  <Link
+                    href="/#pricing"
+                    className="h-10 px-5 leading-10 rounded-lg border border-emerald-200 text-emerald-700 hover:bg-emerald-50"
+                  >
+                    عرض الباقات والأسعار
+                  </Link>
+                </div>
               </div>
             )}
           </div>
@@ -291,15 +268,9 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="bg-gradient-to-r from-gray-900 to-gray-800 text-white py-8 mt-8">
-        <div className="container mx-auto px-6 text-center max-w-6xl">
-          <div className="flex items-center justify-center gap-3 mb-3">
-            <Image src="/logo.png" alt="o-wms" width={32} height={32} className="w-8 h-8 opacity-80" />
-            <p className="text-sm text-gray-300">© 2025 o-wms. جميع الحقوق محفوظة.</p>
-          </div>
-        </div>
-      </footer>
+      <PricingSection />
+
+      <SiteFooter />
     </div>
   )
 }
