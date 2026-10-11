@@ -27,6 +27,7 @@ export const SUBSCRIPTION_STATUS: Record<string, { label: string; className: str
 }
 
 export const LIVE_STATUSES = ["active", "trialing", "past_due"]
+export const ENDED_STATUSES = ["canceled", "unpaid", "incomplete_expired"]
 
 export function formatMoney(cents: number, currency: string) {
   const c = CURRENCIES[currency as Currency]
@@ -141,6 +142,25 @@ export async function syncStripeSubscription(stripeSub: Stripe.Subscription) {
         is_active: true,
       })
       .eq("id", userId)
+  } else if (ENDED_STATUSES.includes(stripeSub.status)) {
+    // انتهى الاشتراك: يعود الحساب غير نشط ما لم يكن لدى المستخدم اشتراك آخر سارٍ.
+    const [otherLive] = await db
+      .select({ id: subscriptions.id })
+      .from(subscriptions)
+      .where(
+        and(
+          eq(subscriptions.userId, userId),
+          ne(subscriptions.stripeSubscriptionId, stripeSub.id),
+          inArray(subscriptions.status, LIVE_STATUSES),
+        ),
+      )
+      .limit(1)
+    if (!otherLive) {
+      await createAdminClient()
+        .from("user_profiles")
+        .update({ account_status: "suspended", is_active: false })
+        .eq("id", userId)
+    }
   }
 
   return row

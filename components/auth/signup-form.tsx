@@ -38,7 +38,7 @@ export function SignupForm({ next }: { next?: string }) {
         router.push(next ? `/auth/login?next=${encodeURIComponent(next)}` : "/auth/login")
         return
       }
-      router.push(next || `/users/${result.userId}`)
+      router.push(next || `/users/${result.userId}/subscription`)
       router.refresh()
     } catch {
       setError("تعذر الاتصال بالخادم، حاول مرة أخرى")

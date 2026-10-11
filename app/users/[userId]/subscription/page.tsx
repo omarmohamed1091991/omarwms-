@@ -1,9 +1,10 @@
 import Link from "next/link"
-import { CalendarClock, CreditCard, Receipt, RefreshCw } from "lucide-react"
+import { AlertTriangle, CalendarClock, CheckCircle2, CreditCard, Receipt, RefreshCw } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { PlanCard } from "@/components/billing/plan-card"
 import { SubscriptionActions } from "@/components/billing/subscription-actions"
 import { getSessionUser } from "@/lib/auth"
+import { createAdminClient } from "@/lib/supabase/admin"
 import {
   INTERVALS,
   LIVE_STATUSES,
@@ -19,13 +20,21 @@ export const dynamic = "force-dynamic"
 
 export default async function SubscriptionPage({ params }: { params: Promise<{ userId: string }> }) {
   const { userId } = await params
-  const [viewer, sub, history, plans] = await Promise.all([
+  const [viewer, sub, history, plans, { data: profile }] = await Promise.all([
     getSessionUser(),
     getUserSubscription(userId).catch(() => null),
     getUserPayments(userId).catch(() => []),
     listPlans({ activeOnly: true }),
+    createAdminClient()
+      .from("user_profiles")
+      .select("account_status, account_active_until")
+      .eq("id", userId)
+      .single(),
   ])
   const isOwner = viewer?.id === userId
+  const isAdmin = viewer?.role === "admin"
+  const activeUntil = profile?.account_active_until ? new Date(profile.account_active_until) : null
+  const accountActive = profile?.account_status === "active" && (!activeUntil || activeUntil > new Date())
   const live = sub && LIVE_STATUSES.includes(sub.status)
   const status = sub ? SUBSCRIPTION_STATUS[sub.status] ?? { label: sub.status, className: "" } : null
 
@@ -35,6 +44,28 @@ export default async function SubscriptionPage({ params }: { params: Promise<{ u
         <h1 className="text-3xl font-bold text-slate-800">الاشتراك والفواتير</h1>
         <p className="text-sm text-slate-600 mt-1">إدارة خطتك والتجديد التلقائي وسجل المدفوعات</p>
       </div>
+
+      {accountActive ? (
+        <div className="flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-emerald-800">
+          <CheckCircle2 className="w-5 h-5 shrink-0" />
+          <p className="text-sm">
+            <span className="font-bold">حالة الحساب: نشط</span>
+            {activeUntil && <> — حتى {activeUntil.toLocaleDateString("ar-EG")}</>}
+          </p>
+        </div>
+      ) : (
+        <div className="flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-amber-800">
+          <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5" />
+          <div className="text-sm">
+            <p className="font-bold">حالة الحساب: غير نشط</p>
+            <p className="mt-0.5">
+              {isOwner
+                ? "اختر إحدى الخطط أدناه وأتمّ الدفع لتجديد اشتراكك، وسيتم تفعيل حسابك تلقائياً فور نجاح الدفع."
+                : "لم يقم المستخدم بالاشتراك أو تجديد اشتراكه بعد. سيتم تفعيل الحساب تلقائياً فور الدفع."}
+            </p>
+          </div>
+        </div>
+      )}
 
       <Card className="p-6 rounded-2xl">
         {sub ? (
@@ -84,16 +115,19 @@ export default async function SubscriptionPage({ params }: { params: Promise<{ u
         )}
       </Card>
 
-      {isOwner && plans.length > 0 && (
+      {(isOwner || isAdmin) && plans.length > 0 && (
         <div>
-          <h2 className="text-lg font-bold text-slate-800 mb-4">{live ? "تغيير الخطة" : "اختر خطتك"}</h2>
+          <h2 className="text-lg font-bold text-slate-800 mb-4">
+            {!isOwner ? "خطط الأسعار المتاحة" : live ? "تغيير الخطة" : "اختر خطة لتجديد اشتراكك"}
+          </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 pt-2">
             {plans.map((plan) => (
               <PlanCard
                 key={plan.id}
                 plan={plan}
                 isCurrent={!!live && sub?.planId === plan.id}
-                ctaLabel={live ? "الانتقال لهذه الخطة" : "اشترك الآن"}
+                ctaLabel={live ? "الانتقال لهذه الخطة" : sub?.planId === plan.id ? "تجديد الاشتراك" : "اشترك الآن"}
+                readOnly={!isOwner}
               />
             ))}
           </div>

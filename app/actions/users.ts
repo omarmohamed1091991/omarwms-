@@ -53,8 +53,10 @@ export async function createUser(formData: FormData) {
         whatsapp_instance_id: whatsapp_instance_id || null,
         whatsapp_token: whatsapp_token || null,
         role: "user",
-        is_active: true,
-        account_status: "active",
+        // الحساب يبدأ غير نشط حتى يشترك المستخدم أو يجدد اشتراكه.
+        is_active: false,
+        account_status: "suspended",
+        account_active_until: null,
       })
       .eq("id", authData.user.id)
 

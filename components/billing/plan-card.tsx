@@ -7,10 +7,13 @@ export function PlanCard({
   plan,
   isCurrent = false,
   ctaLabel = "اشترك الآن",
+  readOnly = false,
 }: {
   plan: PricingPlan
   isCurrent?: boolean
   ctaLabel?: string
+  /** يعرض الخطة بدون زر اشتراك (مثلاً عند تصفح الأدمن لصفحة مستخدم). */
+  readOnly?: boolean
 }) {
   const period = INTERVALS[plan.interval as Interval]?.label ?? "شهرياً"
   return (
@@ -53,7 +56,7 @@ export function PlanCard({
         <span className="text-center text-sm font-medium h-11 leading-[2.75rem] rounded-lg bg-gray-100 text-gray-500">
           خطتك الحالية
         </span>
-      ) : (
+      ) : readOnly ? null : (
         <Link
           href={`/checkout/${plan.id}`}
           className={`text-center text-sm font-medium h-11 leading-[2.75rem] rounded-lg transition-all ${
