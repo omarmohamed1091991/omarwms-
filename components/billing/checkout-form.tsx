@@ -9,6 +9,7 @@ type Option = { code: "egp" | "sar"; label: string; amount: string }
 
 export function CheckoutForm({ planId, options, period }: { planId: number; options: Option[]; period: string }) {
   const [currency, setCurrency] = useState<Option["code"]>("egp")
+  const [provider, setProvider] = useState<"stripe" | "paymob">("paymob")
   const [accepted, setAccepted] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -21,7 +22,7 @@ export function CheckoutForm({ planId, options, period }: { planId: number; opti
       const res = await fetch("/api/subscription/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ planId, currency, acceptedTerms: accepted }),
+        body: JSON.stringify({ planId, currency, provider, acceptedTerms: accepted }),
       })
       const data = await res.json()
       if (!res.ok || !data.url) throw new Error(data.error || "تعذر بدء عملية الدفع")
@@ -55,16 +56,38 @@ export function CheckoutForm({ planId, options, period }: { planId: number; opti
         </div>
       </div>
 
+      <div>
+        <p className="text-sm font-semibold text-gray-900 mb-2">بوابة الدفع</p>
+        <div className="grid grid-cols-2 gap-3" role="radiogroup">
+          {([
+            ["paymob", "Paymob", "بطاقات ومحافظ إلكترونية – دفعة لكل فترة"],
+            ["stripe", "Stripe", "بطاقة دولية – تجديد تلقائي"],
+          ] as const).map(([code, label, hint]) => (
+            <button
+              key={code}
+              type="button"
+              role="radio"
+              aria-checked={provider === code}
+              onClick={() => setProvider(code)}
+              className={`rounded-xl border p-4 text-right transition-all ${
+                provider === code ? "border-emerald-500 bg-emerald-50 ring-2 ring-emerald-500/20" : "border-gray-200 hover:border-emerald-200"
+              }`}
+            >
+              <p className="text-lg font-bold text-gray-900">{label}</p>
+              <p className="text-xs text-gray-500">{hint}</p>
+            </button>
+          ))}
+        </div>
+      </div>
+
       <div className="rounded-xl bg-gray-50 p-4 text-sm space-y-2">
         <div className="flex justify-between">
           <span className="text-gray-600">المبلغ المستحق اليوم</span>
           <span className="font-bold text-gray-900">{selected.amount}</span>
         </div>
         <div className="flex justify-between text-xs text-gray-500">
-          <span>التجديد التلقائي</span>
-          <span>
-            {selected.amount} {period}
-          </span>
+          <span>{provider === "paymob" ? "التجديد" : "التجديد التلقائي"}</span>
+          <span>{provider === "paymob" ? "يدوي – لا يتم أي خصم تلقائي" : `${selected.amount} ${period}`}</span>
         </div>
       </div>
 
@@ -73,7 +96,9 @@ export function CheckoutForm({ planId, options, period }: { planId: number; opti
         <span>
           أوافق على <Link href="/terms" target="_blank" className="text-emerald-700 underline">الشروط والأحكام</Link> و
           <Link href="/refund-policy" target="_blank" className="text-emerald-700 underline">سياسة الاسترجاع والإلغاء</Link>،
-          وأفهم أن الاشتراك يتجدد تلقائياً {period} حتى أقوم بإلغائه.
+          {provider === "paymob"
+            ? "وأفهم أن هذه دفعة واحدة لفترة اشتراك واحدة، ويتم التجديد يدوياً."
+            : `وأفهم أن الاشتراك يتجدد تلقائياً ${period} حتى أقوم بإلغائه.`}
         </span>
       </label>
 

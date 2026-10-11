@@ -7,7 +7,7 @@ import { getSessionUser } from "@/lib/auth"
 import { createAdminClient } from "@/lib/supabase/admin"
 import {
   INTERVALS,
-  LIVE_STATUSES,
+  isSubscriptionLive,
   SUBSCRIPTION_STATUS,
   formatMoney,
   getUserPayments,
@@ -35,8 +35,10 @@ export default async function SubscriptionPage({ params }: { params: Promise<{ u
   const isAdmin = viewer?.role === "admin"
   const activeUntil = profile?.account_active_until ? new Date(profile.account_active_until) : null
   const accountActive = profile?.account_status === "active" && (!activeUntil || activeUntil > new Date())
-  const live = sub && LIVE_STATUSES.includes(sub.status)
-  const status = sub ? SUBSCRIPTION_STATUS[sub.status] ?? { label: sub.status, className: "" } : null
+  const live = isSubscriptionLive(sub)
+  const isPaymob = sub?.provider === "paymob"
+  const statusKey = sub && isPaymob && !live ? "incomplete_expired" : sub?.status
+  const status = sub && statusKey ? SUBSCRIPTION_STATUS[statusKey] ?? { label: statusKey, className: "" } : null
 
   return (
     <div className="space-y-6">
@@ -95,7 +97,7 @@ export default async function SubscriptionPage({ params }: { params: Promise<{ u
                 {live && (
                   <span className="flex items-center gap-1.5">
                     <RefreshCw className="w-4 h-4" />
-                    التجديد التلقائي: {sub.cancelAtPeriodEnd ? "متوقف" : "مفعل"}
+                    {isPaymob ? "Paymob – دفعة لكل فترة (التجديد يدوي)" : <>التجديد التلقائي: {sub.cancelAtPeriodEnd ? "متوقف" : "مفعل"}</>}
                   </span>
                 )}
               </div>
@@ -103,7 +105,7 @@ export default async function SubscriptionPage({ params }: { params: Promise<{ u
                 <p className="text-sm text-amber-700">تعذر تحصيل دفعة التجديد. يرجى تحديث وسيلة الدفع لتجنب إيقاف الحساب.</p>
               )}
             </div>
-            {live && (isOwner || viewer?.role === "admin") && (
+            {live && !isPaymob && (isOwner || viewer?.role === "admin") && (
               <SubscriptionActions userId={userId} cancelAtPeriodEnd={sub.cancelAtPeriodEnd} canOpenPortal={isOwner && !!sub.stripeCustomerId} />
             )}
           </div>
@@ -125,8 +127,16 @@ export default async function SubscriptionPage({ params }: { params: Promise<{ u
               <PlanCard
                 key={plan.id}
                 plan={plan}
-                isCurrent={!!live && sub?.planId === plan.id}
-                ctaLabel={live ? "الانتقال لهذه الخطة" : sub?.planId === plan.id ? "تجديد الاشتراك" : "اشترك الآن"}
+                isCurrent={!!live && !isPaymob && sub?.planId === plan.id}
+                ctaLabel={
+                  sub?.planId === plan.id && (!live || isPaymob)
+                    ? live
+                      ? "تجديد مبكر"
+                      : "تجديد الاشتراك"
+                    : live
+                      ? "الانتقال لهذه الخطة"
+                      : "اشترك الآن"
+                }
                 readOnly={!isOwner}
               />
             ))}
@@ -149,6 +159,7 @@ export default async function SubscriptionPage({ params }: { params: Promise<{ u
                   <th className="text-right py-2 font-medium">التاريخ</th>
                   <th className="text-right py-2 font-medium">الخطة</th>
                   <th className="text-right py-2 font-medium">المبلغ</th>
+                  <th className="text-right py-2 font-medium">وسيلة الدفع</th>
                   <th className="text-right py-2 font-medium">الفاتورة</th>
                 </tr>
               </thead>
@@ -158,6 +169,7 @@ export default async function SubscriptionPage({ params }: { params: Promise<{ u
                     <td className="py-3">{p.paidAt.toLocaleDateString("ar-EG")}</td>
                     <td className="py-3">{p.planName}</td>
                     <td className="py-3 font-medium">{formatMoney(p.amountCents, p.currency)}</td>
+                    <td className="py-3">{p.provider === "paymob" ? "Paymob" : "Stripe"}</td>
                     <td className="py-3">
                       {p.invoiceUrl ? (
                         <Link href={p.invoiceUrl} target="_blank" className="text-emerald-700 underline">

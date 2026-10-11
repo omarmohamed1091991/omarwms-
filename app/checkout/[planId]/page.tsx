@@ -5,7 +5,7 @@ import { Check, LogIn, UserPlus, AlertTriangle } from "lucide-react"
 import { PageShell } from "@/components/marketing/legal-page"
 import { CheckoutForm } from "@/components/billing/checkout-form"
 import { getSessionUser } from "@/lib/auth"
-import { CURRENCIES, INTERVALS, LIVE_STATUSES, formatMoney, getPlan, getUserSubscription, type Interval } from "@/lib/billing"
+import { CURRENCIES, INTERVALS, isSubscriptionLive, formatMoney, getPlan, getUserSubscription, type Interval } from "@/lib/billing"
 
 export const dynamic = "force-dynamic"
 export const metadata: Metadata = { title: "إتمام الاشتراك | o-wms" }
@@ -24,7 +24,8 @@ export default async function CheckoutPage({
 
   const user = await getSessionUser()
   const current = user ? await getUserSubscription(user.id).catch(() => null) : null
-  const hasLive = current && LIVE_STATUSES.includes(current.status)
+  const hasLive = isSubscriptionLive(current)
+  const currentIsPaymob = current?.provider === "paymob"
   const interval = INTERVALS[plan.interval as Interval] ?? INTERVALS.month
   const next = encodeURIComponent(`/checkout/${plan.id}`)
 

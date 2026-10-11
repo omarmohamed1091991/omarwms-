@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card"
 import { UserPlus, Calendar, MessageSquare, Users, ArrowRight, Sparkles } from "lucide-react"
 import { UsersList } from "@/components/users/users-list"
 import { PlansManager } from "@/components/billing/plans-manager"
-import { LIVE_STATUSES, getSubscriptionsForUsers, listPlans } from "@/lib/billing"
+import { isSubscriptionLive, getSubscriptionsForUsers, listPlans } from "@/lib/billing"
 
 export const revalidate = 0
 
@@ -27,7 +27,7 @@ export default async function UsersPage() {
     listPlans(),
     getSubscriptionsForUsers((users || []).map((u) => u.id)),
   ])
-  const liveSubs = Object.values(subscriptionsByUser).filter((s) => LIVE_STATUSES.includes(s.status))
+  const liveSubs = Object.values(subscriptionsByUser).filter((s) => isSubscriptionLive(s))
   const adminPlans = plans.map((p) => ({ ...p, subscribers: liveSubs.filter((s) => s.planId === p.id).length }))
   const userPlans = Object.fromEntries(
     Object.entries(subscriptionsByUser).map(([id, s]) => [

@@ -5,6 +5,7 @@ import { subscriptions } from "@/db/schema"
 import { getSessionUser } from "@/lib/auth"
 import { getStripe } from "@/lib/stripe"
 import { CURRENCIES, getPlan, planPrice, siteOrigin, type Currency } from "@/lib/billing"
+import { createPaymobCheckout } from "@/lib/paymob"
 
 export async function POST(request: Request) {
   const user = await getSessionUser()
@@ -16,6 +17,19 @@ export async function POST(request: Request) {
   if (!plan || !plan.isActive) return NextResponse.json({ error: "الخطة غير متاحة" }, { status: 404 })
   if (!body.acceptedTerms) {
     return NextResponse.json({ error: "يجب الموافقة على الشروط وسياسة الاسترجاع" }, { status: 400 })
+  }
+
+  if (body.provider === "paymob") {
+    try {
+      const { url } = await createPaymobCheckout({ user, plan, currency, origin: siteOrigin(request) })
+      return NextResponse.json({ url })
+    } catch (error) {
+      if (error instanceof Error && error.message === "MISSING_CONTACT") {
+        return NextResponse.json({ error: "يرجى إضافة رقم الهاتف والبريد الإلكتروني في ملفك الشخصي قبل الدفع عبر Paymob" }, { status: 400 })
+      }
+      console.error("[checkout] Paymob session failed:", error instanceof Error ? error.message : error)
+      return NextResponse.json({ error: "تعذر إنشاء جلسة الدفع عبر Paymob، يرجى المحاولة لاحقاً" }, { status: 500 })
+    }
   }
 
   try {
