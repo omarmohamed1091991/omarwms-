@@ -107,6 +107,7 @@ export default async function UserDashboard({ params }: { params: Promise<{ user
       accountActiveUntil={profile?.account_active_until || null}
       subscriptionExpiresAt={profile?.subscription_expires_at || null}
       subscriptionPriceCents={profile?.subscription_price_cents || 0}
+      userId={userId}
       individualMessages={individualMessages || []}
       bulkMessages={bulkMessages || []}
       bulkRecipientsData={bulkRecipientsData || []}

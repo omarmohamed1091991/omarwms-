@@ -7,8 +7,8 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
-import { Trash2, Phone, Search, Settings, Calendar, Shield, User, Sparkles } from "lucide-react"
-import { deleteUser, updateUserRole, updateUserStatus, updateSubscriptionPrice } from "@/app/actions/users"
+import { Trash2, Phone, Search, Settings, Calendar, Shield, User, Sparkles, CreditCard } from "lucide-react"
+import { deleteUser, updateUserRole, updateUserStatus } from "@/app/actions/users"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -40,14 +40,29 @@ const cardGradients = [
   "from-teal-500 via-emerald-500 to-green-500",
 ]
 
-export function UsersList({ users }: { users: UserInterface[] }) {
+export type UserPlanSummary = {
+  planName: string
+  status: string
+  currentPeriodEnd: string | null
+  cancelAtPeriodEnd: boolean
+}
+
+const planStatusLabel: Record<string, string> = {
+  active: "نشط",
+  trialing: "تجريبي",
+  past_due: "متأخر السداد",
+  canceled: "ملغي",
+  unpaid: "غير مدفوع",
+  incomplete: "بانتظار الدفع",
+}
+
+export function UsersList({ users, plans = {} }: { users: UserInterface[]; plans?: Record<string, UserPlanSummary> }) {
   const router = useRouter()
   const [searchTerm, setSearchTerm] = useState("")
   const [deleting, setDeleting] = useState<string | null>(null)
   const [updatingRole, setUpdatingRole] = useState<string | null>(null)
   const [updatingStatus, setUpdatingStatus] = useState<string | null>(null)
   const [activeUntilDraft, setActiveUntilDraft] = useState<Record<string, string>>({})
-  const [subscriptionPriceDraft, setSubscriptionPriceDraft] = useState<Record<string, string>>({})
 
   const filteredUsers = users.filter(
     (user) =>
@@ -82,13 +97,6 @@ export function UsersList({ users }: { users: UserInterface[] }) {
       alert(result.error || "حدث خطأ أثناء تحديث الصلاحيات")
     }
     setUpdatingRole(null)
-  }
-
-  async function handleSubscriptionPriceChange(userId: string, value: string) {
-    setSubscriptionPriceDraft((current) => ({ ...current, [userId]: value }))
-    const result = await updateSubscriptionPrice(userId, value)
-    if (!result.success) alert(result.error)
-    else router.refresh()
   }
 
   async function handleStatusChange(userId: string, status: "active" | "paused" | "suspended") {
@@ -239,18 +247,22 @@ export function UsersList({ users }: { users: UserInterface[] }) {
                     </div>
 
                     {user.role !== "admin" && (
-                      <div className="mb-2" onClick={(e) => e.stopPropagation()}>
-                        <Input
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          value={subscriptionPriceDraft[user.id] ?? ((user.subscription_price_cents || 0) / 100).toFixed(2)}
-                          onChange={(event) => handleSubscriptionPriceChange(user.id, event.target.value)}
-                          className="h-7 text-[11px] rounded-lg"
-                          aria-label="سعر الاشتراك الشهري بالريال"
-                          placeholder="سعر الاشتراك الشهري بالريال"
-                        />
-                      </div>
+                      <Link
+                        href={`/users/${user.id}/subscription`}
+                        onClick={(e) => e.stopPropagation()}
+                        className="mb-2 flex items-center gap-2 p-1.5 bg-emerald-50/60 rounded-lg hover:bg-emerald-100/70 transition-colors"
+                      >
+                        <CreditCard className="w-3 h-3 text-emerald-600 shrink-0" />
+                        <span className="text-[11px] text-gray-700 truncate">
+                          {plans[user.id]
+                            ? `${plans[user.id].planName} · ${planStatusLabel[plans[user.id].status] ?? plans[user.id].status}${
+                                plans[user.id].currentPeriodEnd
+                                  ? ` · ${plans[user.id].cancelAtPeriodEnd ? "ينتهي" : "يتجدد"} ${new Date(plans[user.id].currentPeriodEnd!).toLocaleDateString("ar-EG")}`
+                                  : ""
+                              }`
+                            : "بدون خطة"}
+                        </span>
+                      </Link>
                     )}
                     <div className="mb-2" onClick={(e) => e.stopPropagation()}>
                       <Select

@@ -3,6 +3,7 @@
 import type React from "react"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -11,7 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Loader2, LogIn, Mail, Lock, AlertCircle } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 
-export function LoginForm() {
+export function LoginForm({ next }: { next?: string }) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -48,7 +49,9 @@ export function LoginForm() {
 
       const { data: profile } = await supabase.from("user_profiles").select("role, id").eq("id", data.user.id).single()
 
-      if (profile?.role === "admin") {
+      if (next) {
+        router.push(next)
+      } else if (profile?.role === "admin") {
         router.push("/users")
       } else {
         router.push(`/users/${data.user.id}`)
@@ -131,6 +134,13 @@ export function LoginForm() {
             )}
           </Button>
         </form>
+
+        <p className="text-center text-sm text-gray-600 mt-6">
+          ليس لديك حساب؟{" "}
+          <Link href={next ? `/auth/signup?next=${encodeURIComponent(next)}` : "/auth/signup"} className="text-emerald-700 font-medium hover:underline">
+            إنشاء حساب جديد
+          </Link>
+        </p>
       </CardContent>
     </Card>
   )

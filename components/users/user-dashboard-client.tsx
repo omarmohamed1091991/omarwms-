@@ -1,7 +1,8 @@
 "use client"
 
 import { useState } from "react"
-import { RenewSubscriptionButton } from "@/components/subscription/renew-subscription-button"
+import Link from "next/link"
+import { CreditCard } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
@@ -39,6 +40,7 @@ interface UserDashboardClientProps {
   accountActiveUntil: string | null
   subscriptionExpiresAt: string | null
   subscriptionPriceCents: number
+  userId: string
   individualMessages: Message[]
   bulkMessages: any[]
   bulkRecipientsData: any[]
@@ -50,6 +52,7 @@ export default function UserDashboardClient({
   accountActiveUntil,
   subscriptionExpiresAt,
   subscriptionPriceCents,
+  userId,
   individualMessages,
   bulkMessages,
   bulkRecipientsData,
@@ -327,7 +330,13 @@ export default function UserDashboardClient({
           </div>
         </div>
   <div className="flex items-center gap-2">
-    {subscriptionPriceCents > 0 && <RenewSubscriptionButton />}
+    <Link
+      href={`/users/${userId}/subscription`}
+      className="flex items-center gap-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 px-3 py-1.5 text-xs font-semibold text-white"
+    >
+      <CreditCard className="h-3.5 w-3.5" />
+      {accountStatus === "active" ? "إدارة الاشتراك" : "تجديد الاشتراك"}
+    </Link>
     <span className="rounded-full border border-current/20 px-3 py-1 text-xs font-semibold">حالة المستخدم</span>
   </div>
       </div>

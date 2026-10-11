@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { UserPlus, Calendar, MessageSquare, Users, ArrowRight, Sparkles } from "lucide-react"
 import { UsersList } from "@/components/users/users-list"
+import { PlansManager } from "@/components/billing/plans-manager"
+import { LIVE_STATUSES, getSubscriptionsForUsers, listPlans } from "@/lib/billing"
 
 export const revalidate = 0
 
@@ -20,6 +22,19 @@ export default async function UsersPage() {
 
   const activeUsers = users?.filter((u) => u.is_active).length || 0
   const totalUsers = users?.length || 0
+
+  const [plans, subscriptionsByUser] = await Promise.all([
+    listPlans(),
+    getSubscriptionsForUsers((users || []).map((u) => u.id)),
+  ])
+  const liveSubs = Object.values(subscriptionsByUser).filter((s) => LIVE_STATUSES.includes(s.status))
+  const adminPlans = plans.map((p) => ({ ...p, subscribers: liveSubs.filter((s) => s.planId === p.id).length }))
+  const userPlans = Object.fromEntries(
+    Object.entries(subscriptionsByUser).map(([id, s]) => [
+      id,
+      { planName: s.planName, status: s.status, currentPeriodEnd: s.currentPeriodEnd?.toISOString() ?? null, cancelAtPeriodEnd: s.cancelAtPeriodEnd },
+    ]),
+  )
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100">
@@ -114,6 +129,12 @@ export default async function UsersPage() {
           </div>
         </div>
 
+        <div className="relative mb-8">
+          <Card className="relative p-6 bg-white/80 backdrop-blur-sm border-0 shadow-xl rounded-2xl">
+            <PlansManager plans={adminPlans} />
+          </Card>
+        </div>
+
         <div className="relative">
           <div className="absolute -inset-1 bg-gradient-to-r from-emerald-500/10 via-purple-500/10 to-blue-500/10 rounded-3xl blur-xl" />
           <Card className="relative p-6 bg-white/80 backdrop-blur-sm border-0 shadow-xl rounded-2xl">
@@ -156,7 +177,7 @@ export default async function UsersPage() {
                 </Link>
               </div>
             ) : (
-              <UsersList users={users} />
+              <UsersList users={users} plans={userPlans} />
             )}
           </Card>
         </div>

@@ -13,7 +13,7 @@ export async function createUser(formData: FormData) {
     const whatsapp_instance_id = formData.get("whatsapp_instance_id") as string | null
     const whatsapp_token = formData.get("whatsapp_token") as string | null
 
-    console.log("[v0] Server Action: Creating user", { full_name, phone_number, email, password })
+    console.log("[v0] Server Action: Creating user", { full_name, phone_number, email })
 
     if (!full_name || !phone_number || !email || !password) {
       return { success: false, error: "جميع الحقول مطلوبة" }
