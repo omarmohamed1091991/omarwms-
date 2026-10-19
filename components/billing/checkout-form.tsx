@@ -5,15 +5,17 @@ import Link from "next/link"
 import { CreditCard, Loader2, Lock, ShieldCheck } from "lucide-react"
 import { Checkbox } from "@/components/ui/checkbox"
 
-type Option = { code: "egp" | "sar"; label: string; amount: string }
+type Option = { code: "egp" | "sar"; label: string; amount: string; paymob: boolean }
 
 export function CheckoutForm({ planId, options, period }: { planId: number; options: Option[]; period: string }) {
-  const [currency, setCurrency] = useState<Option["code"]>("egp")
-  const [provider, setProvider] = useState<"stripe" | "paymob">("paymob")
+  const [currency, setCurrency] = useState<Option["code"]>(() => options.find((o) => o.paymob)?.code ?? "egp")
+  const [chosenProvider, setProvider] = useState<"stripe" | "paymob">("paymob")
   const [accepted, setAccepted] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const selected = options.find((o) => o.code === currency)!
+  // إذا لم تُضبط مفاتيح Paymob لهذه العملة نحوّل المستخدم تلقائياً إلى Stripe.
+  const provider = selected.paymob ? chosenProvider : "stripe"
 
   async function pay() {
     setLoading(true)
@@ -62,21 +64,25 @@ export function CheckoutForm({ planId, options, period }: { planId: number; opti
           {([
             ["paymob", "Paymob", "بطاقات ومحافظ إلكترونية – دفعة لكل فترة"],
             ["stripe", "Stripe", "بطاقة دولية – تجديد تلقائي"],
-          ] as const).map(([code, label, hint]) => (
-            <button
-              key={code}
-              type="button"
-              role="radio"
-              aria-checked={provider === code}
-              onClick={() => setProvider(code)}
-              className={`rounded-xl border p-4 text-right transition-all ${
-                provider === code ? "border-emerald-500 bg-emerald-50 ring-2 ring-emerald-500/20" : "border-gray-200 hover:border-emerald-200"
-              }`}
-            >
-              <p className="text-lg font-bold text-gray-900">{label}</p>
-              <p className="text-xs text-gray-500">{hint}</p>
-            </button>
-          ))}
+          ] as const).map(([code, label, hint]) => {
+            const unavailable = code === "paymob" && !selected.paymob
+            return (
+              <button
+                key={code}
+                type="button"
+                role="radio"
+                aria-checked={provider === code}
+                disabled={unavailable}
+                onClick={() => setProvider(code)}
+                className={`rounded-xl border p-4 text-right transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
+                  provider === code ? "border-emerald-500 bg-emerald-50 ring-2 ring-emerald-500/20" : "border-gray-200 hover:border-emerald-200"
+                }`}
+              >
+                <p className="text-lg font-bold text-gray-900">{label}</p>
+                <p className="text-xs text-gray-500">{unavailable ? `غير متاح حالياً للدفع بـ${selected.label}` : hint}</p>
+              </button>
+            )
+          })}
         </div>
       </div>
 

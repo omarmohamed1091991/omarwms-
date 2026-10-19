@@ -5,6 +5,7 @@ import { Check, LogIn, UserPlus, AlertTriangle } from "lucide-react"
 import { PageShell } from "@/components/marketing/legal-page"
 import { CheckoutForm } from "@/components/billing/checkout-form"
 import { getSessionUser } from "@/lib/auth"
+import { isPaymobConfigured } from "@/lib/paymob"
 import { CURRENCIES, INTERVALS, isSubscriptionLive, formatMoney, getPlan, getUserSubscription, type Interval } from "@/lib/billing"
 
 export const dynamic = "force-dynamic"
@@ -122,6 +123,7 @@ export default async function CheckoutPage({
                     code,
                     label: `${CURRENCIES[code].label} (${CURRENCIES[code].short})`,
                     amount: formatMoney(code === "egp" ? plan.priceEgpCents : plan.priceSarCents, code),
+                    paymob: isPaymobConfigured(code),
                   }))}
                 />
               </>
