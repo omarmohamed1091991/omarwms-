@@ -14,10 +14,14 @@ const REGIONS = {
 
 function regionConfig(currency: Currency) {
   const region = REGIONS[currency]
-  const secretKey = process.env[`${region.env}_SECRET_KEY`]
-  const publicKey = process.env[`${region.env}_PUBLIC_KEY`]
-  const hmacSecret = process.env[`${region.env}_HMAC_SECRET`]
-  const integrationIds = (process.env[`${region.env}_INTEGRATION_IDS`] || "")
+  // لحساب مصر نقبل أيضاً الأسماء العامة (PAYMOB_API_KEY, PAYMOB_PUBLIC_KEY, ...) كما في أمثلة Paymob.
+  const env = (name: string, ...fallbacks: string[]) =>
+    process.env[`${region.env}_${name}`] ||
+    (currency === "egp" ? fallbacks.map((f) => process.env[f]).find(Boolean) : undefined)
+  const secretKey = env("SECRET_KEY", "PAYMOB_SECRET_KEY", "PAYMOB_API_KEY")
+  const publicKey = env("PUBLIC_KEY", "PAYMOB_PUBLIC_KEY")
+  const hmacSecret = env("HMAC_SECRET", "PAYMOB_HMAC_SECRET", "PAYMOB_HMAC")
+  const integrationIds = (env("INTEGRATION_IDS", "PAYMOB_INTEGRATION_IDS", "PAYMOB_INTEGRATION_ID") || "")
     .split(",")
     .map((id) => Number(id.trim()))
     .filter((id) => Number.isInteger(id) && id > 0)
