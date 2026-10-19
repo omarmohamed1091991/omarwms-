@@ -21,7 +21,16 @@ function regionConfig(currency: Currency) {
     .split(",")
     .map((id) => Number(id.trim()))
     .filter((id) => Number.isInteger(id) && id > 0)
-  if (!secretKey || !publicKey || !hmacSecret || integrationIds.length === 0) return null
+  if (!secretKey || !publicKey || !hmacSecret || integrationIds.length === 0) {
+    const missing = [
+      !secretKey && "SECRET_KEY",
+      !publicKey && "PUBLIC_KEY",
+      !hmacSecret && "HMAC_SECRET",
+      integrationIds.length === 0 && "INTEGRATION_IDS",
+    ].filter(Boolean)
+    console.warn(`[paymob] ${region.currency} not configured, missing: ${missing.map((m) => `${region.env}_${m}`).join(", ")}`)
+    return null
+  }
   return { ...region, secretKey, publicKey, hmacSecret, integrationIds }
 }
 
