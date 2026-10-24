@@ -32,7 +32,7 @@ export async function PricingSection() {
       )}
 
       <p className="text-center text-xs text-gray-500 mt-6 leading-relaxed">
-        يتم تفعيل الاشتراك رقمياً فور تأكيد الدفع (24 ساعة كحد أقصى). يمكنك إيقاف التجديد التلقائي في أي وقت وفق{" "}
+        يتم تفعيل الاشتراك رقمياً فور تأكيد الدفع (24 ساعة كحد أقصى). الدفع لكل فترة على حدة ولا يتم أي خصم تلقائي، وفق{" "}
         <Link href="/refund-policy" className="text-emerald-700 underline">
           سياسة الاسترجاع والإلغاء
         </Link>{" "}
