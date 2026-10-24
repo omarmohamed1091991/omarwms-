@@ -1,10 +1,9 @@
 import crypto from "node:crypto"
-import { and, desc, eq, inArray, isNotNull } from "drizzle-orm"
+import { and, desc, eq } from "drizzle-orm"
 import { db } from "@/db"
 import { payments, paymobSessions, subscriptions, type PaymobSession, type PricingPlan } from "@/db/schema"
 import { createAdminClient } from "@/lib/supabase/admin"
-import { LIVE_STATUSES, cancelOtherSubscriptions, planPrice, type Currency } from "@/lib/billing"
-import { getStripe } from "@/lib/stripe"
+import { planPrice, type Currency } from "@/lib/billing"
 
 // لكل عملة حساب Paymob مستقل: مصر (EGP) والسعودية (SAR).
 const REGIONS = {
@@ -16,26 +15,122 @@ function regionConfig(currency: Currency) {
   const region = REGIONS[currency]
   // لحساب مصر نقبل أيضاً الأسماء العامة (PAYMOB_API_KEY, PAYMOB_PUBLIC_KEY, ...) كما في أمثلة Paymob.
   const env = (name: string, ...fallbacks: string[]) =>
-    process.env[`${region.env}_${name}`] ||
-    (currency === "egp" ? fallbacks.map((f) => process.env[f]).find(Boolean) : undefined)
-  const secretKey = env("SECRET_KEY", "PAYMOB_SECRET_KEY", "PAYMOB_API_KEY")
+    process.env[`${region.env}_${name}`]?.trim() ||
+    (currency === "egp" ? fallbacks.map((f) => process.env[f]?.trim()).find(Boolean) : undefined)
+  // المفتاح السري والعام لواجهة Intention (Unified Checkout).
+  const secretKey = env("SECRET_KEY", "PAYMOB_SECRET_KEY")
   const publicKey = env("PUBLIC_KEY", "PAYMOB_PUBLIC_KEY")
+  // API Key القديم لواجهة الدفع عبر iframe، ويُستخدم عندما لا تكون Intention مفعّلة على الحساب.
+  const apiKey = env("API_KEY", "PAYMOB_API_KEY")
+  const iframeId = Number(env("IFRAME_ID", "PAYMOB_IFRAME_ID")) || null
   const hmacSecret = env("HMAC_SECRET", "PAYMOB_HMAC_SECRET", "PAYMOB_HMAC")
   const integrationIds = (env("INTEGRATION_IDS", "PAYMOB_INTEGRATION_IDS", "PAYMOB_INTEGRATION_ID") || "")
     .split(",")
     .map((id) => Number(id.trim()))
     .filter((id) => Number.isInteger(id) && id > 0)
-  if (!secretKey || !publicKey || !hmacSecret || integrationIds.length === 0) {
+  const intention = !!secretKey && !!publicKey
+  if ((!intention && !apiKey) || !hmacSecret || integrationIds.length === 0) {
     const missing = [
-      !secretKey && "SECRET_KEY",
-      !publicKey && "PUBLIC_KEY",
+      !intention && !apiKey && "SECRET_KEY + PUBLIC_KEY (or API_KEY)",
       !hmacSecret && "HMAC_SECRET",
       integrationIds.length === 0 && "INTEGRATION_IDS",
     ].filter(Boolean)
     console.warn(`[paymob] ${region.currency} not configured, missing: ${missing.map((m) => `${region.env}_${m}`).join(", ")}`)
     return null
   }
-  return { ...region, secretKey, publicKey, hmacSecret, integrationIds }
+  return { ...region, secretKey, publicKey, apiKey, iframeId, intention, hmacSecret, integrationIds }
+}
+
+type RegionConfig = NonNullable<ReturnType<typeof regionConfig>>
+
+type CheckoutInput = {
+  reference: string
+  amountCents: number
+  item: { name: string; description: string }
+  billing: Record<string, string>
+  customer: { first_name: string; last_name: string; email: string }
+  origin: string
+  extras: Record<string, unknown>
+}
+
+/** واجهة Intention الحديثة: تعيد رابط صفحة الدفع الموحدة (Unified Checkout). */
+async function intentionCheckout(config: RegionConfig, input: CheckoutInput) {
+  const res = await fetch(`${config.base}/v1/intention/`, {
+    method: "POST",
+    headers: { Authorization: `Token ${config.secretKey}`, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      amount: input.amountCents,
+      currency: config.currency,
+      payment_methods: config.integrationIds,
+      items: [{ ...input.item, amount: input.amountCents, quantity: 1 }],
+      billing_data: input.billing,
+      customer: input.customer,
+      special_reference: input.reference,
+      expiration: 3600,
+      notification_url: `${input.origin}/api/paymob/webhook`,
+      redirection_url: `${input.origin}/checkout/paymob/return`,
+      extras: input.extras,
+    }),
+  })
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok || !data.client_secret) throw new Error(`Intention failed: ${res.status} ${data?.detail || data?.message || ""}`)
+  return {
+    intentionId: data.id ? String(data.id) : null,
+    orderId: data.intention_order_id ? String(data.intention_order_id) : null,
+    url: `${config.base}/unifiedcheckout/?publicKey=${encodeURIComponent(config.publicKey!)}&clientSecret=${encodeURIComponent(data.client_secret)}`,
+  }
+}
+
+async function legacyPost(config: RegionConfig, path: string, body: object, token?: string) {
+  const res = await fetch(`${config.base}/api/${path}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+    body: JSON.stringify(body),
+  })
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) throw new Error(`${path} failed: ${res.status} ${data?.detail || data?.message || ""}`)
+  return data
+}
+
+/**
+ * واجهة الدفع القديمة (Order + Payment Key + iframe). تعتمد على روابط الـ callback
+ * المضبوطة داخل الـ Integration في لوحة Paymob.
+ */
+async function legacyCheckout(config: RegionConfig, input: CheckoutInput) {
+  const { token } = await legacyPost(config, "auth/tokens", { api_key: config.apiKey })
+  const order = await legacyPost(config, "ecommerce/orders", {
+    auth_token: token,
+    delivery_needed: false,
+    amount_cents: input.amountCents,
+    currency: config.currency,
+    merchant_order_id: input.reference,
+    items: [{ ...input.item, amount_cents: input.amountCents, quantity: 1 }],
+  })
+  const key = await legacyPost(config, "acceptance/payment_keys", {
+    auth_token: token,
+    amount_cents: input.amountCents,
+    expiration: 3600,
+    order_id: order.id,
+    currency: config.currency,
+    integration_id: config.integrationIds[0],
+    lock_order_when_paid: true,
+    billing_data: { ...input.billing, shipping_method: "NA", postal_code: "NA" },
+  })
+
+  let iframeId = config.iframeId
+  if (!iframeId) {
+    // إذا لم يُحدَّد رقم الـ iframe نستخدم أول iframe في الحساب.
+    const res = await fetch(`${config.base}/api/acceptance/iframes?page_size=50`, { headers: { Authorization: `Bearer ${token}` } })
+    const list = (await res.json().catch(() => ({})))?.results ?? []
+    iframeId = list[0]?.id ?? null
+  }
+  if (!iframeId) throw new Error("No Paymob iframe found – create one under Developers → iframes")
+
+  return {
+    intentionId: null,
+    orderId: String(order.id),
+    url: `${config.base}/api/acceptance/iframes/${iframeId}?payment_token=${encodeURIComponent(key.token)}`,
+  }
 }
 
 export function isPaymobConfigured(currency: Currency) {
@@ -87,61 +182,57 @@ export async function createPaymobCheckout({
     })
     .returning()
 
-  const itemName = `o-wms – ${plan.nameEn || plan.name}`.slice(0, 50)
-  const res = await fetch(`${config.base}/v1/intention/`, {
-    method: "POST",
-    headers: { Authorization: `Token ${config.secretKey}`, "Content-Type": "application/json" },
-    body: JSON.stringify({
-      amount: amountCents,
-      currency: config.currency,
-      payment_methods: config.integrationIds,
-      items: [
-        {
-          name: itemName,
-          amount: amountCents,
-          description: `${plan.name} – ${plan.interval === "year" ? "اشتراك سنة واحدة" : "اشتراك شهر واحد"}`.slice(0, 255),
-          quantity: 1,
-        },
-      ],
-      billing_data: {
-        first_name: name.first,
-        last_name: name.last,
-        email,
-        phone_number: phone,
-        apartment: "NA",
-        floor: "NA",
-        street: "NA",
-        building: "NA",
-        city: "NA",
-        state: "NA",
-        country: config.country,
-      },
-      customer: { first_name: name.first, last_name: name.last, email },
-      special_reference: reference,
-      expiration: 3600,
-      notification_url: `${origin}/api/paymob/webhook`,
-      redirection_url: `${origin}/checkout/paymob/return`,
-      extras: { userId: user.id, planId: plan.id },
-    }),
-  })
-  const data = await res.json().catch(() => ({}))
-  if (!res.ok || !data.client_secret) {
-    console.error("[paymob] Intention failed:", res.status, data?.detail || data?.message || "")
+  const input: CheckoutInput = {
+    reference,
+    amountCents,
+    item: {
+      name: `o-wms – ${plan.nameEn || plan.name}`.slice(0, 50),
+      description: `${plan.name} – ${plan.interval === "year" ? "اشتراك سنة واحدة" : "اشتراك شهر واحد"}`.slice(0, 255),
+    },
+    billing: {
+      first_name: name.first,
+      last_name: name.last,
+      email,
+      phone_number: phone,
+      apartment: "NA",
+      floor: "NA",
+      street: "NA",
+      building: "NA",
+      city: "NA",
+      state: "NA",
+      country: config.country,
+    },
+    customer: { first_name: name.first, last_name: name.last, email },
+    origin,
+    extras: { userId: user.id, planId: plan.id },
+  }
+
+  let result: Awaited<ReturnType<typeof intentionCheckout>> | null = null
+  if (config.intention) {
+    try {
+      result = await intentionCheckout(config, input)
+    } catch (error) {
+      console.error("[paymob]", error instanceof Error ? error.message : error)
+    }
+  }
+  if (!result && config.apiKey) {
+    try {
+      result = await legacyCheckout(config, input)
+    } catch (error) {
+      console.error("[paymob]", error instanceof Error ? error.message : error)
+    }
+  }
+  if (!result) {
     await db.update(paymobSessions).set({ status: "failed", updatedAt: new Date() }).where(eq(paymobSessions.id, session.id))
-    throw new Error("Paymob intention failed")
+    throw new Error("Paymob checkout failed")
   }
 
   await db
     .update(paymobSessions)
-    .set({
-      intentionId: data.id ? String(data.id) : null,
-      paymobOrderId: data.intention_order_id ? String(data.intention_order_id) : null,
-      updatedAt: new Date(),
-    })
+    .set({ intentionId: result.intentionId, paymobOrderId: result.orderId, updatedAt: new Date() })
     .where(eq(paymobSessions.id, session.id))
 
-  const url = `${config.base}/unifiedcheckout/?publicKey=${encodeURIComponent(config.publicKey)}&clientSecret=${encodeURIComponent(data.client_secret)}`
-  return { url, reference }
+  return { url: result.url, reference }
 }
 
 // ترتيب الحقول الذي تعتمده Paymob لحساب HMAC لبيانات المعاملة.
@@ -307,26 +398,6 @@ async function activatePaymobPeriod(session: PaymobSession) {
       is_active: true,
     })
     .eq("id", session.userId)
-
-  // إذا كان لدى المستخدم اشتراك Stripe متجدد، نوقفه حتى لا يُخصم منه مرتين.
-  const [stripeLive] = await db
-    .select({ id: subscriptions.id })
-    .from(subscriptions)
-    .where(
-      and(
-        eq(subscriptions.userId, session.userId),
-        isNotNull(subscriptions.stripeSubscriptionId),
-        inArray(subscriptions.status, LIVE_STATUSES),
-      ),
-    )
-    .limit(1)
-  if (stripeLive) {
-    try {
-      await cancelOtherSubscriptions(getStripe(), session.userId, "")
-    } catch (error) {
-      console.error("[paymob] Failed to cancel Stripe subscription:", error)
-    }
-  }
 
   return row
 }

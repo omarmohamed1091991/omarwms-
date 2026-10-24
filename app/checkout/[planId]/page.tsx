@@ -81,7 +81,7 @@ export default async function CheckoutPage({
             {!user ? (
               <div className="text-center py-10">
                 <h2 className="text-lg font-bold text-gray-900 mb-2">سجّل الدخول لإتمام الدفع</h2>
-                <p className="text-sm text-gray-600 mb-6">يرتبط الاشتراك بحسابك ليتم تفعيله وتجديده تلقائياً.</p>
+                <p className="text-sm text-gray-600 mb-6">يرتبط الاشتراك بحسابك ليتم تفعيله تلقائياً بعد الدفع.</p>
                 <div className="flex flex-wrap justify-center gap-3">
                   <Link
                     href={`/auth/login?next=${next}`}

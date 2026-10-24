@@ -2,7 +2,6 @@ import Link from "next/link"
 import { AlertTriangle, CalendarClock, CheckCircle2, CreditCard, Receipt, RefreshCw } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { PlanCard } from "@/components/billing/plan-card"
-import { SubscriptionActions } from "@/components/billing/subscription-actions"
 import { getSessionUser } from "@/lib/auth"
 import { createAdminClient } from "@/lib/supabase/admin"
 import {
@@ -44,7 +43,7 @@ export default async function SubscriptionPage({ params }: { params: Promise<{ u
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold text-slate-800">الاشتراك والفواتير</h1>
-        <p className="text-sm text-slate-600 mt-1">إدارة خطتك والتجديد التلقائي وسجل المدفوعات</p>
+        <p className="text-sm text-slate-600 mt-1">إدارة خطتك وتجديد الاشتراك وسجل المدفوعات</p>
       </div>
 
       {accountActive ? (
@@ -90,24 +89,18 @@ export default async function SubscriptionPage({ params }: { params: Promise<{ u
                 {sub.currentPeriodEnd && (
                   <span className="flex items-center gap-1.5">
                     <CalendarClock className="w-4 h-4" />
-                    {live && !sub.cancelAtPeriodEnd ? "يتجدد تلقائياً في" : "ينتهي في"}{" "}
+                    ينتهي في{" "}
                     {sub.currentPeriodEnd.toLocaleDateString("ar-EG")}
                   </span>
                 )}
                 {live && (
                   <span className="flex items-center gap-1.5">
                     <RefreshCw className="w-4 h-4" />
-                    {isPaymob ? "Paymob – دفعة لكل فترة (التجديد يدوي)" : <>التجديد التلقائي: {sub.cancelAtPeriodEnd ? "متوقف" : "مفعل"}</>}
+                    التجديد يدوي – دفعة لكل فترة
                   </span>
                 )}
               </div>
-              {sub.status === "past_due" && (
-                <p className="text-sm text-amber-700">تعذر تحصيل دفعة التجديد. يرجى تحديث وسيلة الدفع لتجنب إيقاف الحساب.</p>
-              )}
             </div>
-            {live && !isPaymob && (isOwner || viewer?.role === "admin") && (
-              <SubscriptionActions userId={userId} cancelAtPeriodEnd={sub.cancelAtPeriodEnd} canOpenPortal={isOwner && !!sub.stripeCustomerId} />
-            )}
           </div>
         ) : (
           <div className="text-center py-6">
