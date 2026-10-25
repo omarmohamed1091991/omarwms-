@@ -2,6 +2,7 @@ import type { ReactNode } from "react"
 import { redirect } from "next/navigation"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { UserSidebar } from "@/components/users/user-sidebar"
+import { UserTopNav } from "@/components/users/user-top-nav"
 
 export const revalidate = 0
 
@@ -34,6 +35,7 @@ export default async function UserLayout({
 
       {/* Main Content - يبدأ مباشرة بعد الـ sidebar */}
       <main className="lg:mr-64 min-h-screen">
+        <UserTopNav />
         <div className="p-4 lg:p-6">{children}</div>
       </main>
     </div>
