@@ -1,0 +1,31 @@
+<div class="owms-pay" dir="rtl">
+  <div class="owms-head">
+    <strong>o-wms</strong>
+    <span>دفع آمن بالبطاقة</span>
+  </div>
+  <form role="form" id="paymob_checkout">
+    <label for="number">رقم البطاقة</label>
+    <input id="number" class="owms-input ltr" type="text" inputmode="numeric" autocomplete="cc-number" placeholder="0000 0000 0000 0000" maxlength="19" required>
+    <input id="clean-number" type="hidden" paymob_field="card_number">
+
+    <div class="owms-row">
+      <div>
+        <label for="expiry">تاريخ الانتهاء</label>
+        <input id="expiry" class="owms-input ltr" type="text" inputmode="numeric" autocomplete="cc-exp" placeholder="MM / YY" maxlength="7" required>
+        <input id="expmonth" type="hidden" paymob_field="card_expiry_mm">
+        <input id="expyear" type="hidden" paymob_field="card_expiry_yy">
+      </div>
+      <div>
+        <label for="cvv">CVV</label>
+        <input id="cvv" class="owms-input ltr" type="password" inputmode="numeric" autocomplete="cc-csc" placeholder="123" maxlength="4" paymob_field="card_cvn" required>
+      </div>
+    </div>
+
+    <label for="name">اسم حامل البطاقة</label>
+    <input id="name" class="owms-input ltr" type="text" autocomplete="cc-name" placeholder="NAME ON CARD" paymob_field="card_holdername" required>
+
+    <input type="hidden" value="CARD" paymob_field="subtype">
+    <input type="submit" id="pay-button" value="ادفع الآن">
+  </form>
+  <p class="owms-note">لا نحتفظ ببيانات بطاقتك · الدفع عبر Paymob</p>
+</div>
