@@ -20,9 +20,8 @@ function regionConfig(currency: Currency) {
   // المفتاح السري والعام لواجهة Intention (Unified Checkout).
   const secretKey = env("SECRET_KEY", "PAYMOB_SECRET_KEY")
   const publicKey = env("PUBLIC_KEY", "PAYMOB_PUBLIC_KEY")
-  // API Key القديم لواجهة الدفع عبر iframe، ويُستخدم عندما لا تكون Intention مفعّلة على الحساب.
+  // API Key لإنشاء Payment Key، ويُستخدم عندما لا تكون Intention مفعّلة على الحساب.
   const apiKey = env("API_KEY", "PAYMOB_API_KEY")
-  const iframeId = Number(env("IFRAME_ID", "PAYMOB_IFRAME_ID")) || null
   const hmacSecret = env("HMAC_SECRET", "PAYMOB_HMAC_SECRET", "PAYMOB_HMAC")
   const integrationIds = (env("INTEGRATION_IDS", "PAYMOB_INTEGRATION_IDS", "PAYMOB_INTEGRATION_ID") || "")
     .split(",")
@@ -38,7 +37,7 @@ function regionConfig(currency: Currency) {
     console.warn(`[paymob] ${region.currency} not configured, missing: ${missing.map((m) => `${region.env}_${m}`).join(", ")}`)
     return null
   }
-  return { ...region, secretKey, publicKey, apiKey, iframeId, intention, hmacSecret, integrationIds }
+  return { ...region, secretKey, publicKey, apiKey, intention, hmacSecret, integrationIds }
 }
 
 type RegionConfig = NonNullable<ReturnType<typeof regionConfig>>
@@ -93,10 +92,11 @@ async function legacyPost(config: RegionConfig, path: string, body: object, toke
 }
 
 /**
- * واجهة الدفع القديمة (Order + Payment Key + iframe). تعتمد على روابط الـ callback
- * المضبوطة داخل الـ Integration في لوحة Paymob.
+ * واجهة Payment Key (Order + Payment Key) مع التوجيه إلى صفحة الدفع المستضافة لدى Paymob.
+ * لا تحتاج إلى iframe: الصفحة تعرض نموذج البطاقة اعتماداً على الـ payment_token فقط.
+ * نتيجة الدفع تصل عبر روابط الـ callback المضبوطة داخل الـ Integration في لوحة Paymob.
  */
-async function legacyCheckout(config: RegionConfig, input: CheckoutInput) {
+async function paymentKeyCheckout(config: RegionConfig, input: CheckoutInput) {
   const { token } = await legacyPost(config, "auth/tokens", { api_key: config.apiKey })
   const order = await legacyPost(config, "ecommerce/orders", {
     auth_token: token,
@@ -116,20 +116,12 @@ async function legacyCheckout(config: RegionConfig, input: CheckoutInput) {
     lock_order_when_paid: true,
     billing_data: { ...input.billing, shipping_method: "NA", postal_code: "NA" },
   })
-
-  let iframeId = config.iframeId
-  if (!iframeId) {
-    // إذا لم يُحدَّد رقم الـ iframe نستخدم أول iframe في الحساب.
-    const res = await fetch(`${config.base}/api/acceptance/iframes?page_size=50`, { headers: { Authorization: `Bearer ${token}` } })
-    const list = (await res.json().catch(() => ({})))?.results ?? []
-    iframeId = list[0]?.id ?? null
-  }
-  if (!iframeId) throw new Error("No Paymob iframe found – create one under Developers → iframes")
+  if (!key.token) throw new Error("payment_keys returned no token")
 
   return {
     intentionId: null,
     orderId: String(order.id),
-    url: `${config.base}/api/acceptance/iframes/${iframeId}?payment_token=${encodeURIComponent(key.token)}`,
+    url: `${config.base}/iframe/?payment_token=${encodeURIComponent(key.token)}`,
   }
 }
 
@@ -142,7 +134,7 @@ function splitName(fullName: string | null | undefined) {
   return { first: parts[0] || "Customer", last: parts.slice(1).join(" ") || parts[0] || "OWMS" }
 }
 
-/** ينشئ Payment Intention لدى Paymob ويعيد رابط صفحة الدفع الموحدة (Unified Checkout). */
+/** ينشئ جلسة دفع لدى Paymob (Intention أو Payment Key) ويعيد رابط صفحة الدفع المستضافة لتوجيه المستخدم إليها. */
 export async function createPaymobCheckout({
   user,
   plan,
@@ -212,12 +204,13 @@ export async function createPaymobCheckout({
     try {
       result = await intentionCheckout(config, input)
     } catch (error) {
-      console.error("[paymob]", error instanceof Error ? error.message : error)
+      // متوقع عندما لا تكون Intention مفعّلة للـ Integration؛ ننتقل إلى Payment Key.
+      console.warn("[paymob] intention:", error instanceof Error ? error.message : error)
     }
   }
   if (!result && config.apiKey) {
     try {
-      result = await legacyCheckout(config, input)
+      result = await paymentKeyCheckout(config, input)
     } catch (error) {
       console.error("[paymob]", error instanceof Error ? error.message : error)
     }
