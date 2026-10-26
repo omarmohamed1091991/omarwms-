@@ -13,7 +13,6 @@ import {
   Send,
   CheckCircle,
   XCircle,
-  ArrowUpRight,
   Activity,
   BarChart3,
   AlertTriangle,
@@ -225,38 +224,26 @@ export default function UserDashboardClient({
       title: "إجمالي المحاولات",
       value: currentStats.totalAttempted,
       icon: Send,
-      gradient: "from-blue-500 via-blue-600 to-indigo-600",
-      bgGradient: "from-blue-50 to-indigo-50",
-      iconBg: "bg-blue-500",
-      change: "+12%",
+      iconBg: "bg-slate-900",
     },
     {
       title: "مقبولة من Meta",
       value: currentStats.totalAccepted,
       icon: CheckCircle,
-      gradient: "from-green-500 via-green-600 to-emerald-600",
-      bgGradient: "from-green-50 to-emerald-50",
-      iconBg: "bg-green-500",
-      change: "+8%",
+      iconBg: "bg-emerald-600",
       subtitle: "تم قبولها من WhatsApp",
     },
     {
       title: "الرسائل الفاشلة",
       value: currentStats.totalFailed,
       icon: XCircle,
-      gradient: "from-red-500 via-red-600 to-green-600",
-      bgGradient: "from-red-50 to-green-50",
-      iconBg: "bg-red-500",
-      change: "-3%",
+      iconBg: "bg-rose-500",
     },
     {
       title: "الرسائل الواردة",
       value: currentStats.incomingTotal,
       icon: Inbox,
-      gradient: "from-purple-500 via-purple-600 to-emerald-600",
-      bgGradient: "from-purple-50 to-emerald-50",
-      iconBg: "bg-purple-500",
-      change: "+15%",
+      iconBg: "bg-sky-600",
       badge: currentStats.unreadIncoming > 0 ? `${currentStats.unreadIncoming} غير مقروءة` : undefined,
     },
   ]
@@ -266,22 +253,19 @@ export default function UserDashboardClient({
       title: "إحصائيات اليوم",
       icon: Calendar,
       stats: todayStats,
-      gradient: "from-cyan-500 to-teal-500",
-      bgGradient: "from-cyan-50 to-teal-50",
+      iconBg: "bg-sky-600",
     },
     {
       title: "إحصائيات الأسبوع",
       icon: TrendingUp,
       stats: weekStats,
-      gradient: "from-violet-500 to-purple-500",
-      bgGradient: "from-violet-50 to-purple-50",
+      iconBg: "bg-slate-900",
     },
     {
       title: "إحصائيات الشهر",
       icon: BarChart3,
       stats: monthStats,
-      gradient: "from-emerald-500 to-green-500",
-      bgGradient: "from-emerald-50 to-green-50",
+      iconBg: "bg-emerald-600",
     },
   ]
 
@@ -490,28 +474,17 @@ export default function UserDashboardClient({
             <Card
               key={card.title}
               className={cn(
-                "relative overflow-hidden border-0 shadow-lg transition-all duration-300 hover:shadow-2xl hover:-translate-y-2",
-                "bg-gradient-to-br",
-                card.bgGradient,
+                "relative overflow-hidden border border-slate-200 bg-white shadow-sm transition-all duration-300 hover:shadow-md hover:-translate-y-0.5",
               )}
               style={{
                 animationDelay: `${index * 100}ms`,
               }}
             >
-              <div className="absolute top-0 right-0 w-32 h-32 opacity-20">
-                <div className={`w-full h-full bg-gradient-to-br ${card.gradient} rounded-full blur-2xl`}></div>
-              </div>
               <CardContent className="relative pt-6 pb-6">
                 <div className="flex items-start justify-between mb-4">
-                  <div className={cn("p-3 rounded-xl shadow-lg", card.iconBg)}>
+                  <div className={cn("p-3 rounded-xl", card.iconBg)}>
                     <Icon className="h-6 w-6 text-white" />
                   </div>
-                  {card.change && (
-                    <div className="flex items-center gap-1 text-sm font-semibold text-green-600 bg-green-100 px-2 py-1 rounded-full">
-                      <ArrowUpRight className="h-3 w-3" />
-                      {card.change}
-                    </div>
-                  )}
                 </div>
                 <div className="space-y-2">
                   <p className="text-sm font-medium text-slate-600">{card.title}</p>
@@ -535,20 +508,13 @@ export default function UserDashboardClient({
             <Card
               key={period.title}
               className={cn(
-                "relative overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1",
-                "bg-gradient-to-br",
-                period.bgGradient,
+                "relative overflow-hidden border border-slate-200 bg-white shadow-sm hover:shadow-md transition-all duration-300",
               )}
             >
-              <div className="absolute inset-0 opacity-20">
-                <div
-                  className={`absolute top-0 right-0 w-40 h-40 bg-gradient-to-br ${period.gradient} rounded-full blur-2xl`}
-                ></div>
-              </div>
               <CardHeader className="relative pb-3">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-lg font-bold text-slate-800">{period.title}</CardTitle>
-                  <div className={cn("p-2 rounded-lg shadow-md bg-gradient-to-br", period.gradient)}>
+                  <div className={cn("p-2 rounded-lg", period.iconBg)}>
                     <Icon className="h-5 w-5 text-white" />
                   </div>
                 </div>
@@ -575,17 +541,17 @@ export default function UserDashboardClient({
                     </p>
                   </div>
                 </div>
-                <div className="grid grid-cols-3 gap-2 pt-4 border-t-2 border-white/50">
-                  <div className="text-center bg-white/70 backdrop-blur-sm rounded-xl p-3 shadow-sm">
+                <div className="grid grid-cols-3 gap-2 pt-4 border-t border-slate-100">
+                  <div className="text-center bg-slate-50 rounded-xl p-3">
                     <p className="text-2xl font-bold text-green-600">{period.stats.totalAccepted.toLocaleString()}</p>
                     <p className="text-xs text-slate-600 font-medium mt-1">مقبولة</p>
                   </div>
-                  <div className="text-center bg-white/70 backdrop-blur-sm rounded-xl p-3 shadow-sm">
+                  <div className="text-center bg-slate-50 rounded-xl p-3">
                     <p className="text-2xl font-bold text-red-600">{period.stats.totalFailed.toLocaleString()}</p>
                     <p className="text-xs text-slate-600 font-medium mt-1">فاشلة</p>
                   </div>
-                  <div className="text-center bg-white/70 backdrop-blur-sm rounded-xl p-3 shadow-sm">
-                    <p className="text-2xl font-bold text-purple-600">{period.stats.incomingTotal.toLocaleString()}</p>
+                  <div className="text-center bg-slate-50 rounded-xl p-3">
+                    <p className="text-2xl font-bold text-sky-600">{period.stats.incomingTotal.toLocaleString()}</p>
                     <p className="text-xs text-slate-600 font-medium mt-1">واردة</p>
                   </div>
                 </div>
@@ -595,7 +561,7 @@ export default function UserDashboardClient({
         })}
       </div>
 
-      <Card className="border-0 shadow-lg bg-gradient-to-br from-orange-50 to-amber-50">
+      <Card className="border border-amber-200 bg-amber-50/60 shadow-sm">
         <CardHeader className="pb-3">
           <CardTitle className="text-lg font-bold text-orange-900 flex items-center gap-2">
             <Users className="h-5 w-5" />

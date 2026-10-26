@@ -1,6 +1,6 @@
 import { asc, desc, eq, inArray } from "drizzle-orm"
 import { db } from "@/db"
-import { payments, pricingPlans, subscriptions, type PricingPlan, type Subscription } from "@/db/schema"
+import { payments, paymobSessions, pricingPlans, subscriptions, type PricingPlan, type Subscription } from "@/db/schema"
 
 export const CURRENCIES = {
   egp: { code: "egp", label: "جنيه مصري", symbol: "ج.م", short: "EGP" },
@@ -75,8 +75,49 @@ export async function getUserSubscription(userId: string) {
   return sub ?? null
 }
 
+const paymentWithOrder = {
+  payment: payments,
+  orderId: paymobSessions.paymobOrderId,
+  reference: paymobSessions.reference,
+  interval: paymobSessions.interval,
+}
+
 export async function getUserPayments(userId: string) {
-  return db.select().from(payments).where(eq(payments.userId, userId)).orderBy(desc(payments.paidAt)).limit(50)
+  const rows = await db
+    .select(paymentWithOrder)
+    .from(payments)
+    .leftJoin(paymobSessions, eq(paymobSessions.paymobTransactionId, payments.paymobTransactionId))
+    .where(eq(payments.userId, userId))
+    .orderBy(desc(payments.paidAt))
+    .limit(50)
+  return rows.map((r) => ({ ...r.payment, orderId: r.orderId, reference: r.reference, interval: r.interval }))
+}
+
+export async function getPaymentWithOrder(paymentId: number) {
+  if (!Number.isInteger(paymentId)) return null
+  const [row] = await db
+    .select(paymentWithOrder)
+    .from(payments)
+    .leftJoin(paymobSessions, eq(paymobSessions.paymobTransactionId, payments.paymobTransactionId))
+    .where(eq(payments.id, paymentId))
+    .limit(1)
+  return row ? { ...row.payment, orderId: row.orderId, reference: row.reference, interval: row.interval } : null
+}
+
+export async function getPaymentIdByTransaction(transactionId: string | null | undefined) {
+  if (!transactionId) return null
+  const [row] = await db.select({ id: payments.id }).from(payments).where(eq(payments.paymobTransactionId, transactionId)).limit(1)
+  return row?.id ?? null
+}
+
+/** رقم فاتورة ثابت مبني على تاريخ ومعرّف الدفعة، مثل INV-2026-000012. */
+export function invoiceNumber(payment: { id: number; paidAt: Date }) {
+  return `INV-${payment.paidAt.getFullYear()}-${String(payment.id).padStart(6, "0")}`
+}
+
+/** رقم الطلب: رقم طلب Paymob إن وُجد، وإلا رقم المرجع المرسل إلى Paymob. */
+export function orderNumber(payment: { orderId?: string | null; reference?: string | null; paymobTransactionId?: string | null }) {
+  return payment.orderId || payment.reference || payment.paymobTransactionId || "—"
 }
 
 export async function getSubscriptionsForUsers(userIds: string[]) {

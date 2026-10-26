@@ -1,9 +1,9 @@
 import type { Metadata } from "next"
 import Link from "next/link"
-import { CheckCircle2, Clock, XCircle } from "lucide-react"
+import { CheckCircle2, Clock, Download, XCircle } from "lucide-react"
 import { PageShell } from "@/components/marketing/legal-page"
 import { getSessionUser } from "@/lib/auth"
-import { INTERVALS, formatMoney, type Interval } from "@/lib/billing"
+import { INTERVALS, formatMoney, getPaymentIdByTransaction, type Interval } from "@/lib/billing"
 import { processPaymobTransaction, transactionFromQuery } from "@/lib/paymob"
 
 export const dynamic = "force-dynamic"
@@ -25,6 +25,7 @@ export default async function PaymobReturnPage({ searchParams }: { searchParams:
   const session = valid ? result.session : null
   const end = valid && "subscription" in result ? result.subscription?.currentPeriodEnd : null
   const owner = user && session && session.userId === user.id
+  const invoiceId = paid && owner ? await getPaymentIdByTransaction(session.paymobTransactionId).catch(() => null) : null
 
   return (
     <PageShell>
@@ -59,6 +60,14 @@ export default async function PaymobReturnPage({ searchParams }: { searchParams:
                   {formatMoney(session.amountCents, session.currency)} – {INTERVALS[session.interval as Interval]?.noun ?? "شهر"} واحد
                 </dd>
               </div>
+              {session.paymobOrderId && (
+                <div className="flex justify-between">
+                  <dt className="text-gray-500">رقم الطلب</dt>
+                  <dd className="font-mono text-xs" dir="ltr">
+                    {session.paymobOrderId}
+                  </dd>
+                </div>
+              )}
               <div className="flex justify-between">
                 <dt className="text-gray-500">رقم المرجع</dt>
                 <dd className="font-mono text-xs" dir="ltr">
@@ -74,6 +83,15 @@ export default async function PaymobReturnPage({ searchParams }: { searchParams:
             </dl>
           )}
           <div className="flex flex-wrap justify-center gap-3">
+            {invoiceId && user && (
+              <Link
+                href={`/users/${user.id}/subscription/invoices/${invoiceId}?download=1`}
+                className="inline-flex items-center gap-2 h-11 px-6 rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-700 text-sm font-medium"
+              >
+                <Download className="w-4 h-4" />
+                تحميل الفاتورة PDF
+              </Link>
+            )}
             {!paid && session?.planId && (
               <Link
                 href={`/checkout/${session.planId}`}

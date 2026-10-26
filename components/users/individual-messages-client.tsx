@@ -222,12 +222,12 @@ export function IndividualMessagesClient({
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-3xl font-bold text-gray-900 mb-2">الرسائل الفردية</h2>
+        <h2 className="text-2xl lg:text-3xl font-bold text-slate-900 mb-2">الرسائل الفردية</h2>
         <p className="text-gray-600">إرسال رسائل واتساب فردية للعملاء</p>
       </div>
 
       <Card className="border-2">
-        <CardHeader className="bg-gradient-to-r from-blue-50 to-blue-100">
+        <CardHeader className="bg-slate-50/80 border-b border-slate-100">
           <CardTitle className="flex items-center gap-2">
             <Send className="w-5 h-5" />
             إرسال رسالة جديدة
@@ -407,7 +407,7 @@ export function IndividualMessagesClient({
           <Button
             onClick={handleSend}
             disabled={!canSend || sending || !phone || !messageText || (templateHasImage && !selectedMediaId)}
-            className="w-full bg-gradient-to-r from-emerald-500 to-blue-900 hover:from-emerald-600 hover:to-blue-950"
+            className="w-full bg-emerald-600 hover:bg-emerald-700"
           >
             {sending ? "جاري الإرسال..." : "إرسال الرسالة"}
           </Button>

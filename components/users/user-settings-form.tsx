@@ -13,7 +13,7 @@ export function UserSettingsForm({ userId, profile, settings }: any) {
     <div className="space-y-6">
       {/* Profile Settings */}
       <Card className="border-2">
-        <CardHeader className="bg-gradient-to-r from-blue-50 to-blue-100">
+        <CardHeader className="bg-slate-50/80 border-b border-slate-100">
           <CardTitle className="flex items-center gap-2">
             <Settings className="w-5 h-5" />
             معلومات الحساب
@@ -28,13 +28,13 @@ export function UserSettingsForm({ userId, profile, settings }: any) {
             <Label>رقم الجوال</Label>
             <Input defaultValue={profile?.phone_number || ""} className="font-mono" disabled />
           </div>
-          <Button className="bg-gradient-to-r from-emerald-500 to-blue-900">حفظ التغييرات</Button>
+          <Button className="bg-emerald-600 hover:bg-emerald-700">حفظ التغييرات</Button>
         </CardContent>
       </Card>
 
       {/* WhatsApp Settings */}
       <Card className="border-2">
-        <CardHeader className="bg-gradient-to-r from-green-50 to-green-100">
+        <CardHeader className="bg-slate-50/80 border-b border-slate-100">
           <CardTitle className="flex items-center gap-2">
             <Phone className="w-5 h-5" />
             إعدادات WhatsApp API
@@ -64,7 +64,7 @@ export function UserSettingsForm({ userId, profile, settings }: any) {
 
       {/* Auto Reply Settings */}
       <Card className="border-2">
-        <CardHeader className="bg-gradient-to-r from-purple-50 to-purple-100">
+        <CardHeader className="bg-slate-50/80 border-b border-slate-100">
           <CardTitle>الرد التلقائي</CardTitle>
         </CardHeader>
         <CardContent className="pt-6 space-y-4">

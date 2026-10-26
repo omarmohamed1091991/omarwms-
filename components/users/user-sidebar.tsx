@@ -19,6 +19,7 @@ import {
   CreditCard,
   ChevronLeft,
   ShieldCheck,
+  CalendarCheck,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { createClient } from "@/lib/supabase/client"
@@ -48,6 +49,7 @@ export function UserSidebar({ userId, userName, userPhone, accountStatus, isAdmi
         { href: `/users/${userId}/individual`, label: "رسائل فردية", icon: MessageSquare },
         { href: `/users/${userId}/bulk`, label: "رسائل جماعية", icon: Users },
         { href: `/users/${userId}/free-messages`, label: "رسائل حرة", icon: MessageSquareText },
+        { href: `/users/${userId}/appointments`, label: "تأكيد المواعيد", icon: CalendarCheck },
         { href: `/users/${userId}/inbox`, label: "صندوق الوارد", icon: Inbox },
         { href: `/users/${userId}/media`, label: "مكتبة الصور", icon: Images },
       ],

@@ -266,7 +266,7 @@ export function WhatsAppSettingsForm({ userId }: { userId: string }) {
   return (
     <div className="space-y-6">
       <Card className="border-2 border-blue-500 shadow-lg">
-        <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50">
+        <CardHeader className="bg-slate-50/80 border-b border-slate-100">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-blue-600 rounded-lg">
               <Globe className="w-5 h-5 text-white" />
@@ -316,7 +316,7 @@ export function WhatsAppSettingsForm({ userId }: { userId: string }) {
             </div>
           </div>
 
-          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-400 rounded-lg p-4">
+          <div className="bg-slate-50 border border-slate-200 rounded-lg p-4">
             <div className="flex items-start gap-3">
               <div className="p-2 bg-blue-600 rounded-lg shrink-0">
                 <Globe className="w-5 h-5 text-white" />

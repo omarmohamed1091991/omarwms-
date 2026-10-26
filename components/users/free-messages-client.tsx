@@ -421,7 +421,7 @@ export default function FreeMessagesClient({ userId }: { userId: string }) {
 
   return (
     <div className="space-y-6">
-      <Card className="border-2 border-indigo-200 bg-gradient-to-br from-indigo-50 to-white">
+      <Card className="border border-slate-200 bg-white shadow-sm">
         <CardContent className="p-6">
           <div className="flex items-center gap-2 mb-4 justify-end">
             <h2 className="text-xl font-bold text-indigo-800">نوع الرسالة</h2>
@@ -463,7 +463,7 @@ export default function FreeMessagesClient({ userId }: { userId: string }) {
       </Card>
 
       {useTemplate && (
-        <Card className="border-2 border-emerald-200 bg-gradient-to-br from-emerald-50 to-white">
+        <Card className="border border-slate-200 bg-white shadow-sm">
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-4">
               <Button
@@ -536,7 +536,7 @@ export default function FreeMessagesClient({ userId }: { userId: string }) {
       )}
 
       {useTemplate && selectedTemplate && templateHasImage && (
-        <Card className="border-2 border-orange-200 bg-gradient-to-br from-orange-50 to-white">
+        <Card className="border border-slate-200 bg-white shadow-sm">
           <CardContent className="p-6">
             <div className="flex items-center gap-2 mb-4 justify-end">
               <h2 className="text-xl font-bold text-orange-800">صورة القالب (مطلوبة)</h2>
@@ -570,7 +570,7 @@ export default function FreeMessagesClient({ userId }: { userId: string }) {
 
       {/* نص الرسالة - يظهر فقط للرسائل الحرة */}
       {!useTemplate && (
-        <Card className="border-2 border-purple-200 bg-gradient-to-br from-purple-50 to-white">
+        <Card className="border border-slate-200 bg-white shadow-sm">
           <CardContent className="p-6">
             <div className="flex items-center gap-2 mb-4 justify-end">
               <h2 className="text-xl font-bold text-purple-800">نص الرسالة</h2>
@@ -590,7 +590,7 @@ export default function FreeMessagesClient({ userId }: { userId: string }) {
 
       {/* إضافة صورة (اختياري) - للرسائل الحرة فقط */}
       {!useTemplate && (
-        <Card className="border-2 border-teal-200 bg-gradient-to-br from-teal-50 to-white">
+        <Card className="border border-slate-200 bg-white shadow-sm">
           <CardContent className="p-6">
             <div className="flex items-center gap-2 mb-4 justify-end">
               <h2 className="text-xl font-bold text-teal-800">إضافة صورة (اختياري)</h2>
@@ -665,7 +665,7 @@ export default function FreeMessagesClient({ userId }: { userId: string }) {
       )}
 
       {/* اختيار رمز الدولة */}
-      <Card className="border-2 border-emerald-200 bg-gradient-to-br from-emerald-50 to-white">
+      <Card className="border border-slate-200 bg-white shadow-sm">
         <CardContent className="p-6">
           <div className="flex items-center gap-2 mb-4 justify-end">
             <h2 className="text-xl font-bold text-emerald-800">اختيار رمز الدولة</h2>
@@ -690,7 +690,7 @@ export default function FreeMessagesClient({ userId }: { userId: string }) {
       </Card>
 
       {/* أرقام الجوال */}
-      <Card className="border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-white">
+      <Card className="border border-slate-200 bg-white shadow-sm">
         <CardContent className="p-6">
           <div className="flex items-center justify-between mb-4">
             <div className="flex gap-2">
@@ -793,7 +793,7 @@ export default function FreeMessagesClient({ userId }: { userId: string }) {
           (useTemplate ? !selectedTemplate : !messageText.trim()) ||
           (useTemplate && templateHasImage && !selectedMedia)
         }
-        className="w-full h-14 text-lg bg-gradient-to-r from-emerald-500 to-purple-600 hover:from-emerald-600 hover:to-purple-700 disabled:opacity-50"
+        className="w-full h-14 text-lg bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50"
       >
         {sendingStatus === "sending" ? (
           <>
@@ -906,7 +906,7 @@ export default function FreeMessagesClient({ userId }: { userId: string }) {
               </div>
               <Button
                 onClick={() => setShowResultDialog(false)}
-                className="w-full bg-gradient-to-r from-emerald-500 to-purple-600"
+                className="w-full bg-emerald-600 hover:bg-emerald-700"
               >
                 إغلاق
               </Button>
