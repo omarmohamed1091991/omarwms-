@@ -82,7 +82,49 @@ export const paymobSessions = pgTable(
   (t) => [index("paymob_sessions_user_id_idx").on(t.userId), index("paymob_sessions_order_idx").on(t.paymobOrderId)],
 )
 
+// قوالب رسائل تأكيد المواعيد الخاصة بكل مستخدم. النص يحتوي على متغيرات مثل {{الاسم}}.
+// إذا رُبط القالب بقالب واتساب معتمد من Meta يُرسل كقالب، و paramMap يحدد قيمة كل متغير في قالب Meta.
+export const appointmentTemplates = pgTable(
+  "appointment_templates",
+  {
+    id: serial().primaryKey(),
+    userId: text("user_id").notNull(),
+    name: text().notNull(),
+    body: text().notNull(),
+    metaTemplateName: text("meta_template_name"),
+    metaLanguage: text("meta_language"),
+    paramMap: jsonb("param_map").$type<Record<string, string>>().notNull().default({}),
+    isDefault: boolean("is_default").notNull().default(false),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("appointment_templates_user_id_idx").on(t.userId)],
+)
+
+// سجل رسائل تأكيد المواعيد المرسلة.
+export const appointmentMessages = pgTable(
+  "appointment_messages",
+  {
+    id: serial().primaryKey(),
+    userId: text("user_id").notNull(),
+    templateId: integer("template_id").references(() => appointmentTemplates.id, { onDelete: "set null" }),
+    patientName: text("patient_name").notNull(),
+    patientPhone: text("patient_phone").notNull(),
+    appointmentDate: text("appointment_date").notNull(),
+    appointmentTime: text("appointment_time").notNull(),
+    doctorName: text("doctor_name").notNull().default(""),
+    messageText: text("message_text").notNull(),
+    status: text().notNull().default("sent"), // sent | failed
+    error: text(),
+    whatsappMessageId: text("whatsapp_message_id"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("appointment_messages_user_id_idx").on(t.userId)],
+)
+
 export type PricingPlan = typeof pricingPlans.$inferSelect
 export type Subscription = typeof subscriptions.$inferSelect
 export type Payment = typeof payments.$inferSelect
 export type PaymobSession = typeof paymobSessions.$inferSelect
+export type AppointmentTemplate = typeof appointmentTemplates.$inferSelect
+export type AppointmentMessage = typeof appointmentMessages.$inferSelect

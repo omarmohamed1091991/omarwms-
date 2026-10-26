@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { AlertTriangle, CalendarClock, CheckCircle2, CreditCard, Receipt, RefreshCw } from "lucide-react"
+import { AlertTriangle, CalendarClock, CheckCircle2, CreditCard, Download, Eye, Receipt, RefreshCw } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { PlanCard } from "@/components/billing/plan-card"
 import { getSessionUser } from "@/lib/auth"
@@ -11,7 +11,9 @@ import {
   formatMoney,
   getUserPayments,
   getUserSubscription,
+  invoiceNumber,
   listPlans,
+  orderNumber,
   type Interval,
 } from "@/lib/billing"
 
@@ -42,8 +44,8 @@ export default async function SubscriptionPage({ params }: { params: Promise<{ u
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-slate-800">الاشتراك والفواتير</h1>
-        <p className="text-sm text-slate-600 mt-1">إدارة خطتك وتجديد الاشتراك وسجل المدفوعات</p>
+        <h1 className="text-2xl lg:text-3xl font-bold text-slate-900">الاشتراك والفواتير</h1>
+        <p className="text-sm text-slate-600 mt-1">إدارة خطتك وتجديد الاشتراك وتحميل فواتير المدفوعات</p>
       </div>
 
       {accountActive ? (
@@ -68,7 +70,7 @@ export default async function SubscriptionPage({ params }: { params: Promise<{ u
         </div>
       )}
 
-      <Card className="p-6 rounded-2xl">
+      <Card className="p-6 rounded-2xl border-slate-200 shadow-sm">
         {sub ? (
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div className="space-y-3">
@@ -137,7 +139,7 @@ export default async function SubscriptionPage({ params }: { params: Promise<{ u
         </div>
       )}
 
-      <Card className="p-6 rounded-2xl">
+      <Card className="p-6 rounded-2xl border-slate-200 shadow-sm">
         <div className="flex items-center gap-2 mb-4">
           <Receipt className="w-5 h-5 text-slate-600" />
           <h2 className="text-lg font-bold text-slate-800">سجل المدفوعات</h2>
@@ -147,33 +149,61 @@ export default async function SubscriptionPage({ params }: { params: Promise<{ u
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="text-gray-500 border-b">
+              <thead className="text-slate-500 bg-slate-50">
                 <tr>
-                  <th className="text-right py-2 font-medium">التاريخ</th>
-                  <th className="text-right py-2 font-medium">الخطة</th>
-                  <th className="text-right py-2 font-medium">المبلغ</th>
-                  <th className="text-right py-2 font-medium">وسيلة الدفع</th>
-                  <th className="text-right py-2 font-medium">الفاتورة</th>
+                  <th className="text-right py-2.5 px-3 font-medium rounded-r-lg">رقم الفاتورة</th>
+                  <th className="text-right py-2.5 px-3 font-medium">رقم الطلب</th>
+                  <th className="text-right py-2.5 px-3 font-medium">التاريخ</th>
+                  <th className="text-right py-2.5 px-3 font-medium">الخطة</th>
+                  <th className="text-right py-2.5 px-3 font-medium">المبلغ</th>
+                  <th className="text-right py-2.5 px-3 font-medium">وسيلة الدفع</th>
+                  <th className="text-right py-2.5 px-3 font-medium rounded-l-lg">الفاتورة</th>
                 </tr>
               </thead>
               <tbody>
-                {history.map((p) => (
-                  <tr key={p.id} className="border-b last:border-0">
-                    <td className="py-3">{p.paidAt.toLocaleDateString("ar-EG")}</td>
-                    <td className="py-3">{p.planName}</td>
-                    <td className="py-3 font-medium">{formatMoney(p.amountCents, p.currency)}</td>
-                    <td className="py-3">{p.provider === "paymob" ? "Paymob" : "Stripe"}</td>
-                    <td className="py-3">
-                      {p.invoiceUrl ? (
-                        <Link href={p.invoiceUrl} target="_blank" className="text-emerald-700 underline">
-                          عرض
-                        </Link>
-                      ) : (
-                        "—"
-                      )}
-                    </td>
-                  </tr>
-                ))}
+                {history.map((p) => {
+                  const invoiceHref = `/users/${userId}/subscription/invoices/${p.id}`
+                  return (
+                    <tr key={p.id} className="border-b border-slate-100 last:border-0 hover:bg-slate-50/60">
+                      <td className="py-3 px-3 font-mono text-xs text-slate-700" dir="ltr">
+                        {invoiceNumber(p)}
+                      </td>
+                      <td className="py-3 px-3 font-mono text-xs text-slate-700" dir="ltr">
+                        {orderNumber(p)}
+                      </td>
+                      <td className="py-3 px-3">{p.paidAt.toLocaleDateString("ar-EG")}</td>
+                      <td className="py-3 px-3">{p.planName}</td>
+                      <td className="py-3 px-3 font-semibold">{formatMoney(p.amountCents, p.currency)}</td>
+                      <td className="py-3 px-3">{p.provider === "paymob" ? "Paymob" : "Stripe"}</td>
+                      <td className="py-3 px-3">
+                        {p.status === "paid" ? (
+                          <div className="flex items-center gap-1.5">
+                            <Link
+                              href={invoiceHref}
+                              className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs text-slate-700 hover:bg-slate-100"
+                            >
+                              <Eye className="w-3.5 h-3.5" />
+                              عرض
+                            </Link>
+                            <Link
+                              href={`${invoiceHref}?download=1`}
+                              className="inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-2.5 py-1.5 text-xs text-white hover:bg-emerald-700"
+                            >
+                              <Download className="w-3.5 h-3.5" />
+                              PDF
+                            </Link>
+                          </div>
+                        ) : p.invoiceUrl ? (
+                          <Link href={p.invoiceUrl} target="_blank" className="text-emerald-700 underline">
+                            عرض
+                          </Link>
+                        ) : (
+                          "—"
+                        )}
+                      </td>
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
           </div>

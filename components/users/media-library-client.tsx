@@ -143,7 +143,7 @@ export default function MediaLibraryClient({ userId }: { userId: string }) {
             <Button
               onClick={() => fileInputRef.current?.click()}
               disabled={uploading}
-              className="bg-gradient-to-r from-emerald-500 to-purple-500 hover:from-emerald-600 hover:to-purple-600 text-white"
+              className="bg-emerald-600 hover:bg-emerald-700 text-white"
               size="lg"
             >
               {uploading ? (
@@ -230,7 +230,7 @@ export default function MediaLibraryClient({ userId }: { userId: string }) {
                       loading="lazy"
                     />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-100 to-purple-100">
+                    <div className="w-full h-full flex items-center justify-center bg-slate-100">
                       <span className="text-sm text-gray-600">فيديو</span>
                     </div>
                   )}
@@ -253,7 +253,7 @@ export default function MediaLibraryClient({ userId }: { userId: string }) {
                     <span>{new Date(item.uploaded_at).toLocaleDateString("ar")}</span>
                   </div>
 
-                  <div className="bg-gradient-to-r from-emerald-50 via-purple-50 to-emerald-50 rounded-lg p-3 border-2 border-emerald-300 shadow-sm">
+                  <div className="bg-emerald-50/60 rounded-lg p-3 border border-emerald-200">
                     <div className="flex items-center gap-1 mb-1">
                       <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
                       <div className="text-[10px] font-semibold text-emerald-700 uppercase tracking-wide">

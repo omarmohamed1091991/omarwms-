@@ -51,6 +51,7 @@
     "date-fns": "latest",
     "drizzle-orm": "1.0.0-beta.22",
     "embla-carousel-react": "8.5.1",
+    "html2canvas-pro": "^2.5.2",
     "input-otp": "1.4.1",
     "jspdf": "latest",
     "lucide-react": "^0.454.0",
