@@ -1,6 +1,7 @@
 import { createAdminClient } from "@/lib/supabase/admin"
 import { WhatsAppSettingsForm } from "@/components/users/whatsapp-settings-form"
 import Image from "next/image"
+import { getPublicMetaConfig } from "@/lib/meta"
 
 export const revalidate = 0
 
@@ -24,7 +25,7 @@ export default async function SettingsPage({ params }: { params: Promise<{ userI
         <p className="text-gray-600 text-sm">إدارة إعدادات واتساب وقوالب الرسائل</p>
       </div>
 
-      <WhatsAppSettingsForm userId={userId} profile={profile.data} settings={settings.data} />
+      <WhatsAppSettingsForm userId={userId} profile={profile.data} settings={settings.data} meta={getPublicMetaConfig()} />
     </div>
   )
 }
