@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button"
 import type { IncomingMessage } from "@/lib/types"
 import { formatDistanceToNow } from "date-fns"
 import { ar } from "date-fns/locale"
-import { Mail, MailOpen, Trash2, ExternalLink } from "lucide-react"
+import { Mail, MailOpen, Trash2 } from "lucide-react"
+import { MessageMedia, VerificationCode } from "@/components/inbox/message-media"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
@@ -84,19 +85,16 @@ export function InboxMessages({ messages, userId }: InboxMessagesProps) {
                 <h3 className="font-bold text-lg text-gray-900">{message.sender_phone}</h3>
               </div>
 
+              <VerificationCode text={message.message_text} light />
+
               {message.message_text && <p className="text-gray-700 mb-3 whitespace-pre-wrap">{message.message_text}</p>}
 
-              {message.media_url && (
-                <a
-                  href={message.media_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-600 hover:underline text-sm flex items-center gap-1 mb-3"
-                >
-                  <ExternalLink className="h-4 w-4" />
-                  عرض الوسائط المرفقة
-                </a>
-              )}
+              <MessageMedia
+                messageType={message.message_type}
+                mediaUrl={message.media_url}
+                userId={userId}
+                text={message.message_text}
+              />
 
               <p className="text-sm text-gray-500">
                 {formatDistanceToNow(new Date(message.received_at), {

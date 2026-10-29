@@ -1,83 +1,89 @@
 import { NextResponse } from "next/server"
-import { createClient } from "@/lib/supabase/server"
+import { createAdminClient } from "@/lib/supabase/admin"
+import { getSessionUser } from "@/lib/auth"
+
+function cleanAccessToken(token: string): string {
+  return token
+    .replace(/[   -   　​-‍﻿]/g, "")
+    .replace(/\s+/g, "")
+    .trim()
+}
+
+// يتحقق أن معرف الوسائط يخص هذا المستخدم (مكتبة الصور أو رسائل واردة/صادرة)
+async function userOwnsMedia(supabase: ReturnType<typeof createAdminClient>, userId: string, mediaId: string) {
+  const lookups = await Promise.all([
+    supabase.from("media_library").select("id").eq("user_id", userId).eq("media_id", mediaId).limit(1),
+    supabase.from("incoming_messages").select("id").eq("user_id", userId).eq("media_url", mediaId).limit(1),
+    supabase.from("individual_messages").select("id").eq("user_id", userId).eq("media_url", mediaId).limit(1),
+  ])
+  return lookups.some(({ data }) => (data?.length || 0) > 0)
+}
 
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
     const mediaId = searchParams.get("media_id")
     const userId = searchParams.get("user_id")
-
-    console.log("[v0] Media proxy request:", { mediaId, userId })
+    const download = searchParams.get("download") === "1"
 
     if (!mediaId || !userId) {
       return new NextResponse("Missing parameters", { status: 400 })
     }
 
-    const supabase = await createClient()
+    const sessionUser = await getSessionUser()
+    if (!sessionUser || (sessionUser.id !== userId && sessionUser.role !== "admin")) {
+      return new NextResponse("Unauthorized", { status: 401 })
+    }
 
-    const { data: mediaRecord } = await supabase
-      .from("media_library")
-      .select("media_id, user_id")
-      .eq("media_id", mediaId)
-      .eq("user_id", userId)
-      .maybeSingle()
+    const supabase = createAdminClient()
 
-    if (!mediaRecord) {
+    if (!(await userOwnsMedia(supabase, userId, mediaId))) {
       return new NextResponse("Media not found", { status: 404 })
     }
 
-    // Get the token belonging to the same user who owns this media record.
     const { data: userProfile } = await supabase
       .from("user_profiles")
       .select("whatsapp_access_token")
-      .eq("id", mediaRecord.user_id)
+      .eq("id", userId)
       .single()
 
     if (!userProfile?.whatsapp_access_token) {
-      console.log("[v0] Token not found for user:", userId)
       return new NextResponse("Token not found", { status: 401 })
     }
 
-    console.log("[v0] Fetching media from Meta API:", mediaId)
+    const token = cleanAccessToken(userProfile.whatsapp_access_token)
 
-    // Fetch media URL from Meta API
-    const metaResponse = await fetch(`https://graph.facebook.com/v21.0/${mediaId}`, {
-      headers: {
-        Authorization: `Bearer ${userProfile.whatsapp_access_token}`,
-      },
+    // رابط الوسائط من Meta مؤقت، لذلك نطلبه في كل مرة باستخدام معرف الوسائط
+    const metaResponse = await fetch(`https://graph.facebook.com/v21.0/${encodeURIComponent(mediaId)}`, {
+      headers: { Authorization: `Bearer ${token}` },
     })
 
     if (!metaResponse.ok) {
-      const errorText = await metaResponse.text()
-      console.log("[v0] Meta API error:", errorText)
-      return new NextResponse("Failed to fetch media info", { status: 500 })
+      console.log("[v0] Meta media info error:", metaResponse.status, await metaResponse.text())
+      return new NextResponse("Failed to fetch media info", { status: 502 })
     }
 
     const mediaInfo = await metaResponse.json()
-    console.log("[v0] Media info received:", { url: mediaInfo.url, mime_type: mediaInfo.mime_type })
 
-    // Fetch actual image data
-    const imageResponse = await fetch(mediaInfo.url, {
-      headers: {
-        Authorization: `Bearer ${userProfile.whatsapp_access_token}`,
-      },
+    const fileResponse = await fetch(mediaInfo.url, {
+      headers: { Authorization: `Bearer ${token}` },
     })
 
-    if (!imageResponse.ok) {
-      console.log("[v0] Image fetch failed:", imageResponse.status)
-      return new NextResponse("Failed to fetch image", { status: 500 })
+    if (!fileResponse.ok) {
+      console.log("[v0] Media file fetch failed:", fileResponse.status)
+      return new NextResponse("Failed to fetch media", { status: 502 })
     }
 
-    const imageBuffer = await imageResponse.arrayBuffer()
-    console.log("[v0] Image fetched successfully, size:", imageBuffer.byteLength)
+    const buffer = await fileResponse.arrayBuffer()
+    const headers: Record<string, string> = {
+      "Content-Type": mediaInfo.mime_type || fileResponse.headers.get("content-type") || "application/octet-stream",
+      "Cache-Control": "private, max-age=3600",
+    }
+    if (download) {
+      headers["Content-Disposition"] = `attachment; filename="whatsapp-${mediaId}"`
+    }
 
-    // Return image with proper headers
-    return new NextResponse(imageBuffer, {
-      headers: {
-        "Content-Type": mediaInfo.mime_type || "image/jpeg",
-        "Cache-Control": "private, no-store",
-      },
-    })
+    return new NextResponse(buffer, { headers })
   } catch (error) {
     console.error("[v0] Media proxy error:", error)
     return new NextResponse("Internal server error", { status: 500 })

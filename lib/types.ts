@@ -53,6 +53,10 @@ export interface IncomingMessage {
   sender_phone: string
   message_text: string | null
   media_url: string | null
+  message_type?: string | null
+  sender_name?: string | null
+  direction?: string | null
+  whatsapp_message_id?: string | null
   is_read: boolean
   received_at: string
 }
