@@ -9,6 +9,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { CheckCircle2, XCircle, Copy, RefreshCw, Globe, Phone, AlertTriangle } from "lucide-react"
 import { saveWhatsAppSettings, getWhatsAppSettings } from "@/app/users/[userId]/settings/actions"
+import { MetaConnectButton } from "@/components/users/meta-connect-button"
 
 function cleanAccessToken(token: string): string {
   if (!token) return ""
@@ -27,7 +28,15 @@ function cleanAccessToken(token: string): string {
   return cleaned
 }
 
-export function WhatsAppSettingsForm({ userId }: { userId: string }) {
+export function WhatsAppSettingsForm({
+  userId,
+  meta,
+}: {
+  userId: string
+  profile?: any
+  settings?: any
+  meta?: { appId: string; configId: string; enabled: boolean }
+}) {
   const [formData, setFormData] = useState({
     whatsapp_access_token: "",
     whatsapp_business_account_id: "",
@@ -84,27 +93,28 @@ export function WhatsAppSettingsForm({ userId }: { userId: string }) {
     }))
   }
 
-  useEffect(() => {
-    const loadSettings = async () => {
-      const settings = await getWhatsAppSettings(userId)
-      if (settings) {
-        setFormData({
-          whatsapp_access_token: settings.whatsapp_access_token || "",
-          whatsapp_business_account_id: settings.whatsapp_business_account_id || "",
-          whatsapp_phone_number_id: settings.whatsapp_phone_number_id || "",
-          whatsapp_webhook_verify_token: settings.whatsapp_webhook_verify_token || generateVerifyToken(),
-        })
-        if (settings.whatsapp_connection_status === "connected") {
-          setConnectionStatus("success")
-          setStatusMessage("متصل")
-        }
-      } else {
-        setFormData((prev) => ({
-          ...prev,
-          whatsapp_webhook_verify_token: generateVerifyToken(),
-        }))
+  const loadSettings = async () => {
+    const settings = await getWhatsAppSettings(userId)
+    if (settings) {
+      setFormData({
+        whatsapp_access_token: settings.whatsapp_access_token || "",
+        whatsapp_business_account_id: settings.whatsapp_business_account_id || "",
+        whatsapp_phone_number_id: settings.whatsapp_phone_number_id || "",
+        whatsapp_webhook_verify_token: settings.whatsapp_webhook_verify_token || generateVerifyToken(),
+      })
+      if (settings.whatsapp_connection_status === "connected") {
+        setConnectionStatus("success")
+        setStatusMessage("متصل")
       }
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        whatsapp_webhook_verify_token: generateVerifyToken(),
+      }))
     }
+  }
+
+  useEffect(() => {
     loadSettings()
   }, [userId])
 
@@ -265,6 +275,14 @@ export function WhatsAppSettingsForm({ userId }: { userId: string }) {
 
   return (
     <div className="space-y-6">
+      <MetaConnectButton
+        userId={userId}
+        appId={meta?.appId || ""}
+        configId={meta?.configId || ""}
+        enabled={Boolean(meta?.enabled)}
+        onConnected={() => loadSettings()}
+      />
+
       <Card className="border-2 border-blue-500 shadow-lg">
         <CardHeader className="bg-slate-50/80 border-b border-slate-100">
           <div className="flex items-center gap-3">
