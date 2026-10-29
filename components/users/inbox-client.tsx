@@ -31,6 +31,8 @@ import {
   X,
 } from "lucide-react"
 import { sendReplyMessage, fetchMessagesFromServer } from "@/app/users/[userId]/inbox/actions"
+import { MessageMedia, VerificationCode } from "@/components/inbox/message-media"
+import { extractVerificationCode } from "@/lib/whatsapp-messages"
 
 type FilterType = "all" | "unread" | "read"
 
@@ -940,6 +942,9 @@ export function InboxClient({ userId, initialMessages = [] }: { userId: string; 
                     <div className="flex items-center justify-between gap-2">
                       <p className="text-sm truncate" style={{ color: "#8696a0" }}>
                         {conv.lastMessage.direction === "outgoing" && "أنت: "}
+                        {conv.lastMessage.direction !== "outgoing" &&
+                          extractVerificationCode(getVisibleMessageText(conv.lastMessage)) &&
+                          `🔑 ${extractVerificationCode(getVisibleMessageText(conv.lastMessage))} · `}
                         {getVisibleMessageText(conv.lastMessage) || "رسالة وسائط"}
                       </p>
                       {conv.unreadCount > 0 && (
@@ -1055,14 +1060,13 @@ export function InboxClient({ userId, initialMessages = [] }: { userId: string; 
                           color: "#ffffff",
                         }}
                       >
-                        {msg.media_url && (
-                          <img
-                            src={msg.media_url.startsWith("http") ? msg.media_url : `/api/media-proxy?media_id=${encodeURIComponent(msg.media_url)}&user_id=${encodeURIComponent(userId)}`}
-                            alt="الصورة المرفقة"
-                            className="mb-2 max-h-64 w-full rounded-md object-contain"
-                            loading="lazy"
-                          />
-                        )}
+                        <MessageMedia
+                          messageType={msg.message_type}
+                          mediaUrl={msg.media_url}
+                          userId={userId}
+                          text={msg.message_text}
+                        />
+                        {!isOutgoing && <VerificationCode text={getVisibleMessageText(msg)} />}
                         <p className="text-sm whitespace-pre-wrap break-words">{getVisibleMessageText(msg)}</p>
                         <div
                           className={`flex items-center justify-end gap-1 mt-1 ${isOutgoing ? "text-[#ffffff99]" : "text-[#ffffff80]"}`}

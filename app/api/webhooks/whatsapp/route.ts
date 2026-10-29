@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { createAdminClient } from "@/lib/supabase/admin"
+import { parseIncomingWhatsAppMessage } from "@/lib/whatsapp-messages"
 
 export async function GET(request: NextRequest) {
   const supabase = createAdminClient()
@@ -85,29 +86,16 @@ export async function POST(request: NextRequest) {
             for (const message of change.value.messages) {
               const senderName = contactsMap[message.from] || null
 
-              let messageType = "text"
-              let messageText = ""
-              let mediaUrl = null
+              const { messageType, messageText, mediaId: mediaUrl } = parseIncomingWhatsAppMessage(message)
 
-              if (message.text?.body) {
-                messageType = "text"
-                messageText = message.text.body
-              } else if (message.image) {
-                messageType = "image"
-                mediaUrl = message.image.id
-                messageText = message.image.caption || "📷 صورة"
-              } else if (message.audio) {
-                messageType = "audio"
-                mediaUrl = message.audio.id
-                messageText = "🎵 رسالة صوتية"
-              } else if (message.video) {
-                messageType = "video"
-                mediaUrl = message.video.id
-                messageText = message.video.caption || "🎬 فيديو"
-              } else if (message.document) {
-                messageType = "document"
-                mediaUrl = message.document.id
-                messageText = message.document.filename || "📄 مستند"
+              if (message.id) {
+                const { data: existing } = await supabase
+                  .from("incoming_messages")
+                  .select("id")
+                  .eq("user_id", userId)
+                  .eq("whatsapp_message_id", message.id)
+                  .limit(1)
+                if (existing?.length) continue
               }
 
               console.log("[v0] Saving message from:", message.from, "to user:", userId)

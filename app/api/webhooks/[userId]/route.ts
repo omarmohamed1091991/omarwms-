@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { createAdminClient } from "@/lib/supabase/admin"
+import { parseIncomingWhatsAppMessage } from "@/lib/whatsapp-messages"
 
 // Webhook verification (GET request from Meta)
 export async function GET(request: NextRequest, { params }: { params: Promise<{ userId: string }> }) {
@@ -105,49 +106,19 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
             for (const message of change.value.messages) {
               const senderName = contactsMap[message.from] || null
 
-              // تحديد نوع الرسالة
-              let messageType = "text"
-              let messageText = ""
-              let mediaUrl = null
+              const { messageType, messageText, mediaId: mediaUrl } = parseIncomingWhatsAppMessage(message)
 
-              if (message.text?.body) {
-                messageType = "text"
-                messageText = message.text.body
-              } else if (message.image) {
-                messageType = "image"
-                mediaUrl = message.image.id
-                messageText = message.image.caption || "📷 صورة"
-              } else if (message.audio) {
-                messageType = "audio"
-                mediaUrl = message.audio.id
-                messageText = "🎵 رسالة صوتية"
-              } else if (message.video) {
-                messageType = "video"
-                mediaUrl = message.video.id
-                messageText = message.video.caption || "🎬 فيديو"
-              } else if (message.document) {
-                messageType = "document"
-                mediaUrl = message.document.id
-                messageText = message.document.filename || "📄 مستند"
-              } else if (message.sticker) {
-                messageType = "sticker"
-                mediaUrl = message.sticker.id
-                messageText = "🏷️ ملصق"
-              } else if (message.location) {
-                messageType = "location"
-                messageText = `📍 موقع: ${message.location.latitude}, ${message.location.longitude}`
-              } else if (message.contacts) {
-                messageType = "contact"
-                messageText = "👤 جهة اتصال"
-              } else if (message.button?.text) {
-                messageType = "button_reply"
-                messageText = message.button.text
-              } else if (message.interactive?.button_reply?.title) {
-                messageType = "interactive_reply"
-                messageText = message.interactive.button_reply.title
-              } else if (message.interactive?.list_reply?.title) {
-                messageType = "list_reply"
-                messageText = message.interactive.list_reply.title
+              // Meta تعيد إرسال نفس الحدث أحياناً، لذلك نتجاهل الرسائل المحفوظة مسبقاً
+              let recipients = targetUserIds
+              if (message.id) {
+                const { data: existing } = await supabase
+                  .from("incoming_messages")
+                  .select("user_id")
+                  .eq("whatsapp_message_id", message.id)
+                  .in("user_id", targetUserIds)
+                const saved = new Set((existing || []).map((row) => row.user_id))
+                recipients = targetUserIds.filter((id) => !saved.has(id))
+                if (recipients.length === 0) continue
               }
 
               const receivedAt = message.timestamp
@@ -155,7 +126,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
                 : new Date().toISOString()
 
               const { error } = await supabase.from("incoming_messages").insert(
-                targetUserIds.map((targetUserId) => ({
+                recipients.map((targetUserId) => ({
                   user_id: targetUserId,
                   sender_phone: message.from,
                   sender_name: senderName,
