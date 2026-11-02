@@ -11,6 +11,20 @@ export const metadata: Metadata = { title: "نتيجة الدفع | o-wms" }
 
 // رابط العودة من Paymob (Transaction response callback). يتحقق من HMAC ويفعّل الاشتراك فوراً
 // دون انتظار الـ webhook. المعالجة idempotent فلا يتكرر التمديد.
+// ترجمة أشهر أسباب رفض Paymob/البنك لرسالة مفهومة للعميل.
+function declineReason(message: string | undefined) {
+  const m = (message || "").toLowerCase()
+  if (!m || m === "approved") return null
+  if (m.includes("risk")) return "رفض البنك أو نظام الحماية من الاحتيال العملية. تأكد من تفعيل الشراء عبر الإنترنت للبطاقة وحدودها، أو جرّب بطاقة أخرى."
+  if (m.includes("insufficient")) return "الرصيد غير كافٍ في البطاقة."
+  if (m.includes("3d") || m.includes("authentication")) return "لم يكتمل التحقق (OTP / 3D Secure) من البنك."
+  if (m.includes("invalid credentials") || m.includes("merchant"))
+    return "بوابة الدفع غير مفعّلة بالكامل على حساب التاجر حالياً. نعمل على حل المشكلة، يرجى المحاولة لاحقاً."
+  if (m.includes("expired")) return "البطاقة منتهية الصلاحية."
+  if (m.includes("declined") || m.includes("do not honor")) return "رفض البنك المُصدر للبطاقة العملية."
+  return null
+}
+
 export default async function PaymobReturnPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   const params = await searchParams
   const user = await getSessionUser()
@@ -24,6 +38,7 @@ export default async function PaymobReturnPage({ searchParams }: { searchParams:
   const pending = valid && !result.paid && "pending" in result && result.pending
   const session = valid ? result.session : null
   const end = valid && "subscription" in result ? result.subscription?.currentPeriodEnd : null
+  const reason = !paid && !pending ? declineReason(params["data.message"]) : null
   const owner = user && session && session.userId === user.id
   const invoiceId = paid && owner ? await getPaymentIdByTransaction(session.paymobTransactionId).catch(() => null) : null
 
@@ -48,6 +63,12 @@ export default async function PaymobReturnPage({ searchParams }: { searchParams:
                 ? "سيتم تفعيل اشتراكك تلقائياً فور تأكيد الدفع من Paymob."
                 : "لم يتم خصم أي مبلغ. يمكنك المحاولة مرة أخرى أو اختيار وسيلة دفع مختلفة."}
           </p>
+          {reason && (
+            <p className="text-sm text-red-700 bg-red-50 border border-red-100 rounded-xl p-3 mb-6">
+              <span className="font-semibold">سبب الرفض: </span>
+              {reason}
+            </p>
+          )}
           {session && owner && (
             <dl className="text-sm text-right bg-gray-50 rounded-xl p-4 space-y-2 mb-6">
               <div className="flex justify-between">
