@@ -1,5 +1,7 @@
 "use client"
 
+import { TemplateStatusBadge, TemplateValidityAlert } from "@/components/templates/validity-alerts"
+import { templateValidity } from "@/lib/template-rules"
 import { useMemo, useRef, useState, useTransition, type ReactNode } from "react"
 import {
   AlertTriangle,
@@ -534,15 +536,20 @@ export function AppointmentsClient({
                     >
                       <div className="flex items-center justify-between gap-2">
                         <span className="font-mono font-semibold text-slate-800">{m.name}</span>
-                        <span className={cn("rounded-full px-2 py-0.5", m.status === "APPROVED" ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700")}>
-                          {m.status === "APPROVED" ? "معتمد" : m.status} · {m.language}
-                        </span>
+                        {templateValidity(m.status).usable ? (
+                          <span className="rounded-full px-2 py-0.5 bg-emerald-100 text-emerald-700">معتمد · {m.language}</span>
+                        ) : (
+                          <TemplateStatusBadge status={m.status} />
+                        )}
                       </div>
                       <p className="text-slate-500 mt-1 line-clamp-2">{m.hasMediaHeader ? "قالب يحتوي على وسائط – غير مدعوم هنا" : m.body}</p>
                     </button>
                   ))}
                 </div>
               )}
+              <TemplateValidityAlert
+                template={draft.metaTemplateName ? metaTemplates?.find((m) => m.name === draft.metaTemplateName && m.language === draft.metaLanguage) : null}
+              />
             </div>
 
             <div className="space-y-2">

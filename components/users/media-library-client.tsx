@@ -1,5 +1,6 @@
 "use client"
 
+import { MediaExpiryBadge } from "@/components/templates/validity-alerts"
 import type React from "react"
 import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
@@ -234,6 +235,7 @@ export default function MediaLibraryClient({ userId }: { userId: string }) {
                       <span className="text-sm text-gray-600">فيديو</span>
                     </div>
                   )}
+                  <MediaExpiryBadge uploadedAt={item.uploaded_at} />
                   <div className="absolute top-2 left-2 right-2 flex items-center justify-between opacity-0 group-hover:opacity-100 transition-opacity">
                     <Button
                       size="sm"

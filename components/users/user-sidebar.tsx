@@ -20,6 +20,7 @@ import {
   ChevronLeft,
   ShieldCheck,
   CalendarCheck,
+  LayoutTemplate,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { createClient } from "@/lib/supabase/client"
@@ -46,6 +47,7 @@ export function UserSidebar({ userId, userName, userPhone, accountStatus, isAdmi
     {
       title: "المراسلة",
       items: [
+        { href: `/users/${userId}/templates`, label: "إنشاء القوالب", icon: LayoutTemplate },
         { href: `/users/${userId}/individual`, label: "رسائل فردية", icon: MessageSquare },
         { href: `/users/${userId}/bulk`, label: "رسائل جماعية", icon: Users },
         { href: `/users/${userId}/free-messages`, label: "رسائل حرة", icon: MessageSquareText },

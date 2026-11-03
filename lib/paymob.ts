@@ -1,9 +1,10 @@
 import crypto from "node:crypto"
 import { and, desc, eq } from "drizzle-orm"
 import { db } from "@/db"
-import { payments, paymobSessions, subscriptions, type PaymobSession, type PricingPlan } from "@/db/schema"
+import { payments, paymobSessions, subscriptions, type DiscountCode, type PaymobSession, type PricingPlan } from "@/db/schema"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { planPrice, type Currency } from "@/lib/billing"
+import { applyDiscount } from "@/lib/discounts"
 
 // لكل عملة حساب Paymob مستقل: مصر (EGP) والسعودية (SAR).
 const REGIONS = {
@@ -140,11 +141,13 @@ export async function createPaymobCheckout({
   plan,
   currency,
   origin,
+  discount,
 }: {
   user: { id: string; email: string | null }
   plan: PricingPlan
   currency: Currency
   origin: string
+  discount?: DiscountCode | null
 }) {
   const config = regionConfig(currency)
   if (!config) throw new Error(`Paymob (${currency}) is not configured`)
@@ -159,8 +162,43 @@ export async function createPaymobCheckout({
   if (!email || !phone) throw new Error("MISSING_CONTACT")
   const name = splitName(profile?.full_name)
 
-  const amountCents = planPrice(plan, currency)
+  const originalAmountCents = planPrice(plan, currency)
+  const amountCents = discount ? applyDiscount(originalAmountCents, discount.percentOff).finalCents : originalAmountCents
   const reference = `owms-${user.id.slice(0, 8)}-${Date.now()}-${crypto.randomBytes(3).toString("hex")}`
+  const discountFields = discount
+    ? { discountCodeId: discount.id, discountCode: discount.code, discountPercent: discount.percentOff, originalAmountCents }
+    : {}
+
+  // خصم 100%: لا يوجد مبلغ للدفع، فيُفعّل الاشتراك مباشرة دون المرور ببوابة Paymob.
+  if (amountCents <= 0) {
+    const [freeSession] = await db
+      .insert(paymobSessions)
+      .values({
+        reference,
+        userId: user.id,
+        planId: plan.id,
+        planName: plan.name,
+        currency,
+        amountCents: 0,
+        interval: plan.interval,
+        status: "paid",
+        ...discountFields,
+      })
+      .returning()
+    const subscription = await activatePaymobPeriod(freeSession)
+    await db.insert(payments).values({
+      userId: user.id,
+      subscriptionId: subscription.id,
+      planName: plan.name,
+      amountCents: 0,
+      currency,
+      status: "paid",
+      provider: "paymob",
+      paidAt: new Date(),
+    })
+    return { url: `${origin}/users/${user.id}/subscription`, reference, free: true }
+  }
+
   const [session] = await db
     .insert(paymobSessions)
     .values({
@@ -171,6 +209,7 @@ export async function createPaymobCheckout({
       currency,
       amountCents,
       interval: plan.interval,
+      ...discountFields,
     })
     .returning()
 
@@ -225,7 +264,7 @@ export async function createPaymobCheckout({
     .set({ intentionId: result.intentionId, paymobOrderId: result.orderId, updatedAt: new Date() })
     .where(eq(paymobSessions.id, session.id))
 
-  return { url: result.url, reference }
+  return { url: result.url, reference, free: false }
 }
 
 // ترتيب الحقول الذي تعتمده Paymob لحساب HMAC لبيانات المعاملة.
