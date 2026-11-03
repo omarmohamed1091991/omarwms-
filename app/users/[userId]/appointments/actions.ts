@@ -101,31 +101,43 @@ export type MetaTemplateSummary = { name: string; language: string; status: stri
 
 /** يجلب قوالب واتساب المعتمدة من حساب Meta الخاص بالمستخدم (من الخادم حتى لا يظهر رمز الوصول في المتصفح). */
 export async function fetchMetaTemplates(userId: string) {
-  await assertAccess(userId)
+  const viewer = await getSessionUser().catch(() => null)
+  if (!viewer || (viewer.id !== userId && viewer.role !== "admin")) {
+    return { success: false as const, error: "انتهت الجلسة، يرجى تسجيل الدخول مرة أخرى" }
+  }
   const profile = await getWhatsAppProfile(userId)
   if (!profile?.whatsapp_access_token || !profile.whatsapp_business_account_id) {
     return { success: false as const, error: "يرجى إعداد WhatsApp API في الإعدادات أولاً" }
   }
   try {
-    const res = await fetch(
-      `https://graph.facebook.com/v21.0/${profile.whatsapp_business_account_id}/message_templates?limit=200&fields=name,language,status,components`,
-      { headers: { Authorization: `Bearer ${cleanToken(profile.whatsapp_access_token)}` }, cache: "no-store" },
-    )
-    const json = await res.json()
-    if (!res.ok || !Array.isArray(json.data)) {
-      return { success: false as const, error: json.error?.message || "فشل جلب القوالب من واتساب" }
+    const token = cleanToken(profile.whatsapp_access_token)
+    const raw: any[] = []
+    let next: string | null =
+      `https://graph.facebook.com/v21.0/${profile.whatsapp_business_account_id}/message_templates?limit=100&fields=name,language,status,components`
+    // نتابع صفحات النتائج حتى نجلب كل القوالب (حد أقصى 10 صفحات).
+    for (let page = 0; next && page < 10; page++) {
+      const res: Response = await fetch(next, { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" })
+      const json = await res.json().catch(() => ({}))
+      if (!res.ok || !Array.isArray(json.data)) {
+        if (raw.length) break
+        return { success: false as const, error: json.error?.error_user_msg || json.error?.message || "فشل جلب القوالب من واتساب" }
+      }
+      raw.push(...json.data)
+      next = typeof json.paging?.next === "string" ? json.paging.next : null
     }
-    const templates: MetaTemplateSummary[] = json.data.map((t: any) => {
+    const templates: MetaTemplateSummary[] = raw.map((t: any) => {
       const body = t.components?.find((c: any) => c.type?.toUpperCase() === "BODY")
       const header = t.components?.find((c: any) => c.type?.toUpperCase() === "HEADER")
       return {
-        name: t.name,
-        language: t.language,
-        status: t.status,
-        body: body?.text || "",
-        hasMediaHeader: !!header && header.format && header.format !== "TEXT",
+        name: String(t.name || ""),
+        language: String(t.language || ""),
+        status: String(t.status || ""),
+        body: String(body?.text || ""),
+        hasMediaHeader: !!header?.format && String(header.format).toUpperCase() !== "TEXT",
       }
     })
+    // القوالب المعتمدة أولاً.
+    templates.sort((a, b) => Number(b.status.toUpperCase() === "APPROVED") - Number(a.status.toUpperCase() === "APPROVED"))
     return { success: true as const, templates }
   } catch (error) {
     console.error("[appointments] fetchMetaTemplates failed:", error)
