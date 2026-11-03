@@ -26,6 +26,8 @@ import {
 import * as XLSX from "xlsx"
 import { getWhatsAppSettings } from "@/app/users/[userId]/settings/actions"
 import { getMediaLibraryWithUrls } from "@/app/users/[userId]/media/actions"
+import { MediaExpiryAlert, MediaExpiryBadge, TemplateStatusBadge, TemplateValidityAlert } from "@/components/templates/validity-alerts"
+import { mediaValidity, templateValidity } from "@/lib/template-rules"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 
 interface MediaFile {
@@ -267,6 +269,20 @@ export default function FreeMessagesClient({ userId }: { userId: string }) {
       return
     }
 
+    if (useTemplate && selectedTemplate && !templateValidity(selectedTemplate.status).usable) {
+      toast({ title: "لا يمكن الإرسال بهذا القالب", description: templateValidity(selectedTemplate.status).message, variant: "destructive" })
+      return
+    }
+
+    if (selectedMedia && mediaType === "media_id" && mediaValidity(selectedMedia.uploaded_at).expired) {
+      toast({
+        title: "انتهت صلاحية الصورة",
+        description: "الصورة المختارة انتهت صلاحيتها في واتساب (30 يوماً). ارفعها من جديد من مكتبة الصور.",
+        variant: "destructive",
+      })
+      return
+    }
+
     if (!useTemplate && !messageText.trim()) {
       toast({
         title: "خطأ",
@@ -497,6 +513,7 @@ export default function FreeMessagesClient({ userId }: { userId: string }) {
                       <div className="flex-1">
                         <div className="font-bold text-gray-900">{template.name}</div>
                         <div className="text-xs text-gray-500 mt-1">({template.language})</div>
+                        <TemplateStatusBadge status={template.status} className="mt-1" />
                         <div className="text-xs text-gray-600 mt-2 line-clamp-2">{getTemplatePreview(template)}</div>
                       </div>
                       {selectedTemplate?.name === template.name && (
@@ -529,6 +546,9 @@ export default function FreeMessagesClient({ userId }: { userId: string }) {
                     القالب المختار: <span className="font-bold">{selectedTemplate.name}</span>
                   </p>
                 </div>
+                <div className="mt-3">
+                  <TemplateValidityAlert template={selectedTemplate} />
+                </div>
               </div>
             )}
           </CardContent>
@@ -541,6 +561,9 @@ export default function FreeMessagesClient({ userId }: { userId: string }) {
             <div className="flex items-center gap-2 mb-4 justify-end">
               <h2 className="text-xl font-bold text-orange-800">صورة القالب (مطلوبة)</h2>
               <ImageIcon className="h-5 w-5 text-orange-600" />
+            </div>
+            <div className="mb-3">
+              <MediaExpiryAlert media={selectedMedia} />
             </div>
 
             {selectedMedia ? (
@@ -624,7 +647,8 @@ export default function FreeMessagesClient({ userId }: { userId: string }) {
               </div>
 
               {mediaType === "media_id" ? (
-                <div>
+                <div className="space-y-3">
+                  <MediaExpiryAlert media={selectedMedia} />
                   {selectedMedia ? (
                     <div className="flex items-center gap-2 p-3 bg-teal-100 rounded-lg justify-between">
                       <Button
@@ -791,6 +815,7 @@ export default function FreeMessagesClient({ userId }: { userId: string }) {
           sendingStatus === "sending" ||
           validNumbers.valid.length === 0 ||
           (useTemplate ? !selectedTemplate : !messageText.trim()) ||
+          (useTemplate && !!selectedTemplate && !templateValidity(selectedTemplate.status).usable) ||
           (useTemplate && templateHasImage && !selectedMedia)
         }
         className="w-full h-14 text-lg bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50"
@@ -864,6 +889,7 @@ export default function FreeMessagesClient({ userId }: { userId: string }) {
                     alt={media.file_name}
                     className="w-full h-full object-cover"
                   />
+                  <MediaExpiryBadge uploadedAt={media.uploaded_at} />
                   {selectedMedia?.id === media.id && (
                     <div className="absolute inset-0 bg-emerald-500/20 flex items-center justify-center">
                       <CheckCircle2 className="w-8 h-8 text-emerald-500" />

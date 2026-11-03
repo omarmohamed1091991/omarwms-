@@ -6,6 +6,8 @@ import { Card } from "@/components/ui/card"
 import { UserPlus, Calendar, MessageSquare, Users, ArrowRight, Sparkles } from "lucide-react"
 import { UsersList } from "@/components/users/users-list"
 import { PlansManager } from "@/components/billing/plans-manager"
+import { DiscountsManager } from "@/components/billing/discounts-manager"
+import { listDiscountCodes } from "@/lib/discounts"
 import { isSubscriptionLive, getSubscriptionsForUsers, listPlans } from "@/lib/billing"
 
 export const revalidate = 0
@@ -23,10 +25,21 @@ export default async function UsersPage() {
   const activeUsers = users?.filter((u) => u.is_active).length || 0
   const totalUsers = users?.length || 0
 
-  const [plans, subscriptionsByUser] = await Promise.all([
+  const [plans, subscriptionsByUser, discounts] = await Promise.all([
     listPlans(),
     getSubscriptionsForUsers((users || []).map((u) => u.id)),
+    listDiscountCodes(),
   ])
+  const adminDiscounts = discounts.map((d) => ({
+    id: d.id,
+    code: d.code,
+    percentOff: d.percentOff,
+    description: d.description,
+    isActive: d.isActive,
+    maxUses: d.maxUses,
+    expiresAt: d.expiresAt?.toISOString() ?? null,
+    uses: d.uses,
+  }))
   const liveSubs = Object.values(subscriptionsByUser).filter((s) => isSubscriptionLive(s))
   const adminPlans = plans.map((p) => ({ ...p, subscribers: liveSubs.filter((s) => s.planId === p.id).length }))
   const userPlans = Object.fromEntries(
@@ -132,6 +145,12 @@ export default async function UsersPage() {
         <div className="relative mb-8">
           <Card className="relative p-6 bg-white/80 backdrop-blur-sm border-0 shadow-xl rounded-2xl">
             <PlansManager plans={adminPlans} />
+          </Card>
+        </div>
+
+        <div className="relative mb-8">
+          <Card className="relative p-6 bg-white/80 backdrop-blur-sm border-0 shadow-xl rounded-2xl">
+            <DiscountsManager discounts={adminDiscounts} />
           </Card>
         </div>
 

@@ -10,6 +10,8 @@ import { Send, RefreshCw, CheckCircle2 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { getWhatsAppSettings } from "@/app/users/[userId]/settings/actions"
 import { sendIndividualMessage } from "@/app/users/[userId]/individual/actions"
+import { MediaExpiryAlert, MediaExpiryBadge, TemplateStatusBadge, TemplateValidityAlert } from "@/components/templates/validity-alerts"
+import { mediaValidity, templateValidity } from "@/lib/template-rules"
 
 interface Message {
   id: string
@@ -165,6 +167,14 @@ export function IndividualMessagesClient({
 
   const handleSend = async () => {
     if (!phone || !messageText) return
+    if (selectedTemplate && !templateValidity(selectedTemplate.status).usable) {
+      alert(`❌ ${templateValidity(selectedTemplate.status).message}`)
+      return
+    }
+    if (selectedMedia && mediaValidity(selectedMedia.uploaded_at).expired) {
+      alert("❌ الصورة المختارة انتهت صلاحيتها في واتساب (30 يوماً). ارفعها من جديد من مكتبة الصور.")
+      return
+    }
 
     setSending(true)
     try {
@@ -218,6 +228,7 @@ export function IndividualMessagesClient({
   }, [userId])
 
   const templateHasImage = selectedTemplate?.components?.some((c: any) => c.type === "HEADER" && c.format === "IMAGE")
+  const selectedMedia = selectedMediaId ? mediaLibrary.find((m) => m.media_id === selectedMediaId) : null
 
   return (
     <div className="space-y-6">
@@ -269,6 +280,7 @@ export function IndividualMessagesClient({
                     <div>
                       <div className="font-semibold text-gray-900 text-sm">{template.name}</div>
                       <div className="text-xs text-gray-500 mt-0.5">({template.language})</div>
+                      <TemplateStatusBadge status={template.status} className="mt-1" />
                     </div>
                     {selectedTemplate?.name === template.name && (
                       <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0" />
@@ -277,6 +289,7 @@ export function IndividualMessagesClient({
                 ))}
               </div>
             )}
+            <TemplateValidityAlert template={selectedTemplate} />
           </div>
 
           <div className="bg-emerald-50 p-4 rounded-lg space-y-3">
@@ -330,6 +343,7 @@ export function IndividualMessagesClient({
                 </Button>
               </div>
 
+              <MediaExpiryAlert media={selectedMedia} />
               {selectedMediaId && (
                 <div className="flex items-center gap-3 bg-white p-3 rounded-lg border">
                   <img
@@ -366,6 +380,7 @@ export function IndividualMessagesClient({
                         alt={item.file_name}
                         className="w-full h-full object-cover"
                       />
+                      <MediaExpiryBadge uploadedAt={item.uploaded_at} />
                     </button>
                   ))}
                 </div>
@@ -406,7 +421,14 @@ export function IndividualMessagesClient({
 
           <Button
             onClick={handleSend}
-            disabled={!canSend || sending || !phone || !messageText || (templateHasImage && !selectedMediaId)}
+            disabled={
+              !canSend ||
+              sending ||
+              !phone ||
+              !messageText ||
+              (templateHasImage && !selectedMediaId) ||
+              (!!selectedTemplate && !templateValidity(selectedTemplate.status).usable)
+            }
             className="w-full bg-emerald-600 hover:bg-emerald-700"
           >
             {sending ? "جاري الإرسال..." : "إرسال الرسالة"}

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { getSessionUser } from "@/lib/auth"
 import { CURRENCIES, getPlan, siteOrigin, type Currency } from "@/lib/billing"
 import { createPaymobCheckout } from "@/lib/paymob"
+import { normalizeCode, validateDiscountCode } from "@/lib/discounts"
 
 export async function POST(request: Request) {
   const user = await getSessionUser()
@@ -15,8 +16,16 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "يجب الموافقة على الشروط وسياسة الاسترجاع" }, { status: 400 })
   }
 
+  // كود الخصم اختياري؛ إذا أُرسل يجب أن يكون صالحاً وإلا نوقف العملية حتى لا يدفع المستخدم المبلغ كاملاً دون علمه.
+  let discount = null
+  if (normalizeCode(body.discountCode)) {
+    const check = await validateDiscountCode(body.discountCode)
+    if (!check.ok) return NextResponse.json({ error: check.error }, { status: 400 })
+    discount = check.discount
+  }
+
   try {
-    const { url } = await createPaymobCheckout({ user, plan, currency, origin: siteOrigin(request) })
+    const { url } = await createPaymobCheckout({ user, plan, currency, origin: siteOrigin(request), discount })
     return NextResponse.json({ url })
   } catch (error) {
     if (error instanceof Error && error.message === "MISSING_CONTACT") {

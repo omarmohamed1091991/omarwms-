@@ -17,6 +17,8 @@ import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { toast } from "@/hooks/use-toast" // تصحيح استيراد toast من hooks/use-toast بدلاً من components/ui/toast
 import { CheckCircle } from "lucide-react" // تصحيح استيراد CheckCircle
+import { MediaExpiryAlert, MediaExpiryBadge, TemplateStatusBadge, TemplateValidityAlert } from "@/components/templates/validity-alerts"
+import { mediaValidity, templateValidity } from "@/lib/template-rules"
 
 interface Template {
   name: string
@@ -29,6 +31,7 @@ interface MediaFile {
   id: string
   media_id: string
   file_name: string
+  uploaded_at?: string
 }
 
 interface PhoneNumber {
@@ -275,6 +278,21 @@ export default function BulkMessagesClient({
       toast({
         title: "خطأ",
         description: "الرجاء اختيار قالب رسالة",
+        variant: "destructive",
+      })
+      return
+    }
+
+    const templateCheck = templateValidity(selectedTemplate.status)
+    if (!templateCheck.usable) {
+      toast({ title: "لا يمكن الإرسال بهذا القالب", description: templateCheck.message, variant: "destructive" })
+      return
+    }
+
+    if (selectedMedia && mediaValidity(selectedMedia.uploaded_at).expired) {
+      toast({
+        title: "انتهت صلاحية الصورة",
+        description: "الصورة المختارة انتهت صلاحيتها في واتساب (30 يوماً). ارفعها من جديد من مكتبة الصور.",
         variant: "destructive",
       })
       return
@@ -554,12 +572,18 @@ export default function BulkMessagesClient({
                           selectedTemplate?.name === template.name ? "bg-emerald-100 border-l-4 border-l-emerald-500" : ""
                         }`}
                       >
-                        <div className="font-semibold text-gray-900 text-sm">{template.name}</div>
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="font-semibold text-gray-900 text-sm">{template.name}</div>
+                          <TemplateStatusBadge status={template.status} />
+                        </div>
                         <div className="text-xs text-gray-500 mt-0.5">({template.language})</div>
                       </button>
                     ))}
                   </div>
                 )}
+                <div className="mt-3">
+                  <TemplateValidityAlert template={selectedTemplate} />
+                </div>
               </div>
             )}
           </div>
@@ -631,6 +655,7 @@ export default function BulkMessagesClient({
 
               {mediaType === "media_id" && (
                 <div className="space-y-3">
+                  <MediaExpiryAlert media={selectedMedia} />
                   {selectedMedia && (
                     <div className="flex items-center gap-3 bg-white p-3 rounded-lg border-2 border-teal-300">
                       <div className="w-16 h-16 relative rounded-lg overflow-hidden border border-teal-200">
@@ -711,6 +736,7 @@ export default function BulkMessagesClient({
                                 }
                               }}
                             />
+                            <MediaExpiryBadge uploadedAt={item.uploaded_at} />
                             {selectedMedia?.id === item.id && (
                               <div className="absolute inset-0 bg-teal-500/20 flex items-center justify-center">
                                 <CheckCircle className="w-8 h-8 text-teal-600 font-bold" />
@@ -895,6 +921,7 @@ export default function BulkMessagesClient({
   sendingStatus === "sending" ||
   validNumbers.valid.length === 0 ||
               !selectedTemplate ||
+              !templateValidity(selectedTemplate.status).usable ||
               !whatsappSettings?.whatsapp_access_token ||
               !whatsappSettings?.whatsapp_phone_number_id
             }

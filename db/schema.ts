@@ -60,6 +60,19 @@ export const payments = pgTable(
   (t) => [index("payments_user_id_idx").on(t.userId)],
 )
 
+// أكواد الخصم التي ينشئها الأدمن. الكود الواحد يمكن أن يستخدمه أكثر من مستخدم.
+export const discountCodes = pgTable("discount_codes", {
+  id: serial().primaryKey(),
+  code: text().notNull().unique(), // يُخزن بأحرف كبيرة
+  percentOff: integer("percent_off").notNull(), // 1 - 100
+  description: text().notNull().default(""),
+  isActive: boolean("is_active").notNull().default(true),
+  maxUses: integer("max_uses"), // null = غير محدود
+  expiresAt: timestamp("expires_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+})
+
 // جلسات دفع Paymob (دفعة واحدة لكل فترة). تُنشأ قبل التحويل لصفحة Paymob وتُحدَّث عند تأكيد العملية.
 export const paymobSessions = pgTable(
   "paymob_sessions",
@@ -76,6 +89,11 @@ export const paymobSessions = pgTable(
     intentionId: text("intention_id"),
     paymobOrderId: text("paymob_order_id"),
     paymobTransactionId: text("paymob_transaction_id"),
+    // كود الخصم المطبق (إن وُجد). amountCents هو المبلغ النهائي بعد الخصم.
+    discountCodeId: integer("discount_code_id").references(() => discountCodes.id, { onDelete: "set null" }),
+    discountCode: text("discount_code"),
+    discountPercent: integer("discount_percent"),
+    originalAmountCents: integer("original_amount_cents"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
@@ -125,6 +143,7 @@ export const appointmentMessages = pgTable(
 export type PricingPlan = typeof pricingPlans.$inferSelect
 export type Subscription = typeof subscriptions.$inferSelect
 export type Payment = typeof payments.$inferSelect
+export type DiscountCode = typeof discountCodes.$inferSelect
 export type PaymobSession = typeof paymobSessions.$inferSelect
 export type AppointmentTemplate = typeof appointmentTemplates.$inferSelect
 export type AppointmentMessage = typeof appointmentMessages.$inferSelect
