@@ -1,9 +1,7 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
-import { eq } from "drizzle-orm"
-import { db } from "@/db"
-import { discountCodes } from "@/db/schema"
+import { insertDiscount, patchDiscount, removeDiscount } from "@/lib/catalog"
 import { requireAdmin } from "@/lib/auth"
 import { normalizeCode } from "@/lib/discounts"
 
@@ -48,22 +46,17 @@ async function run(fn: () => Promise<unknown>): Promise<Result> {
 }
 
 export async function createDiscountCode(input: DiscountInput) {
-  return run(() => db.insert(discountCodes).values(parse(input)))
+  return run(() => insertDiscount(parse(input)))
 }
 
 export async function updateDiscountCode(id: number, input: DiscountInput) {
-  return run(() =>
-    db
-      .update(discountCodes)
-      .set({ ...parse(input), updatedAt: new Date() })
-      .where(eq(discountCodes.id, id)),
-  )
+  return run(() => patchDiscount(id, parse(input)))
 }
 
 export async function setDiscountCodeActive(id: number, isActive: boolean) {
-  return run(() => db.update(discountCodes).set({ isActive, updatedAt: new Date() }).where(eq(discountCodes.id, id)))
+  return run(() => patchDiscount(id, { isActive }))
 }
 
 export async function deleteDiscountCode(id: number) {
-  return run(() => db.delete(discountCodes).where(eq(discountCodes.id, id)))
+  return run(() => removeDiscount(id))
 }

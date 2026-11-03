@@ -1,9 +1,7 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
-import { eq } from "drizzle-orm"
-import { db } from "@/db"
-import { pricingPlans } from "@/db/schema"
+import { insertPlan, patchPlan, removePlan } from "@/lib/catalog"
 import { requireAdmin } from "@/lib/auth"
 
 export type PlanInput = {
@@ -63,23 +61,18 @@ async function run(fn: () => Promise<unknown>): Promise<Result> {
 }
 
 export async function createPlan(input: PlanInput) {
-  return run(() => db.insert(pricingPlans).values(parse(input)))
+  return run(() => insertPlan(parse(input)))
 }
 
 export async function updatePlan(id: number, input: PlanInput) {
-  return run(() =>
-    db
-      .update(pricingPlans)
-      .set({ ...parse(input), updatedAt: new Date() })
-      .where(eq(pricingPlans.id, id)),
-  )
+  return run(() => patchPlan(id, parse(input)))
 }
 
 export async function setPlanActive(id: number, isActive: boolean) {
-  return run(() => db.update(pricingPlans).set({ isActive, updatedAt: new Date() }).where(eq(pricingPlans.id, id)))
+  return run(() => patchPlan(id, { isActive }))
 }
 
 // حذف الخطة لا يؤثر على الاشتراكات القائمة؛ تستمر بالسعر الذي تم الاشتراك به.
 export async function deletePlan(id: number) {
-  return run(() => db.delete(pricingPlans).where(eq(pricingPlans.id, id)))
+  return run(() => removePlan(id))
 }
