@@ -194,6 +194,62 @@ export function AppointmentsClient({
     else setEditorError(result.error)
   }
 
+  const [pickerOpen, setPickerOpen] = useState(false)
+  const [pickerError, setPickerError] = useState<string | null>(null)
+
+  /** زر «جلب القوالب» في نموذج الإرسال: يجلب قوالب واتساب ويعرضها للاختيار مباشرة. */
+  const fetchForPicker = async () => {
+    setLoadingMeta(true)
+    setPickerError(null)
+    const result = await fetchMetaTemplates(userId).catch(() => ({ success: false as const, error: "حدث خطأ أثناء جلب القوالب" }))
+    setLoadingMeta(false)
+    if (result.success) {
+      setMetaTemplates(result.templates)
+      setPickerOpen(true)
+    } else {
+      setPickerError(result.error)
+    }
+  }
+
+  /** اختيار قالب واتساب من القائمة: يُستخدم المحفوظ إن وجد، وإلا يُحفظ مباشرة أو يُفتح المحرر لربط المتغيرات. */
+  const pickMetaTemplate = async (m: MetaTemplateSummary) => {
+    setPickerError(null)
+    const existing = templates.find((t) => t.metaTemplateName === m.name && t.metaLanguage === m.language)
+    if (existing) {
+      loadTemplate(existing.id)
+      setPickerOpen(false)
+      return
+    }
+    const placeholders = extractMetaPlaceholders(m.body)
+    const guess = ["name", "date", "time", "doctor", "phone"]
+    const next: Draft = {
+      name: m.name,
+      body: m.body,
+      metaTemplateName: m.name,
+      metaLanguage: m.language,
+      paramMap: Object.fromEntries(placeholders.map((p, i) => [p, guess[i] ?? ""])),
+      isDefault: templates.length === 0,
+    }
+    if (placeholders.length === 0) {
+      // لا توجد متغيرات: نحفظ القالب ونختاره فوراً للإرسال.
+      setLoadingMeta(true)
+      const result = await saveAppointmentTemplate(userId, next).catch(() => ({ success: false as const, error: "تعذّر حفظ القالب" }))
+      setLoadingMeta(false)
+      if (!result.success) return setPickerError(result.error)
+      const saved = { ...result.template, updatedAt: new Date(result.template.updatedAt).toISOString() }
+      setTemplates((prev) => [saved, ...prev.map((t) => (saved.isDefault ? { ...t, isDefault: false } : t))])
+      setTemplateId(saved.id)
+      setBody(saved.body)
+      setPickerOpen(false)
+      return
+    }
+    // توجد متغيرات: نفتح المحرر مع اقتراح لربط كل متغير ليؤكده المستخدم ثم يحفظ.
+    setEditorError(null)
+    setDraft(next)
+    setEditorOpen(true)
+    setPickerOpen(false)
+  }
+
   const applyMetaTemplate = (m: MetaTemplateSummary) => {
     const placeholders = extractMetaPlaceholders(m.body)
     const guess = ["name", "date", "time", "doctor", "phone"]
@@ -285,11 +341,58 @@ export function AppointmentsClient({
                     </option>
                   ))}
                 </select>
-                <Button type="button" variant="outline" className="shrink-0 border-emerald-200 text-emerald-700 hover:bg-emerald-50" onClick={() => loadTemplate(templateId)}>
-                  <Download className="w-4 h-4 ml-1.5" />
-                  جلب قالب الموعد
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="shrink-0 border-emerald-200 text-emerald-700 hover:bg-emerald-50"
+                  onClick={() => fetchForPicker()}
+                  disabled={loadingMeta}
+                >
+                  {loadingMeta ? <Loader2 className="w-4 h-4 ml-1.5 animate-spin" /> : <Download className="w-4 h-4 ml-1.5" />}
+                  جلب القوالب من واتساب
                 </Button>
               </div>
+              {pickerError && (
+                <p className="flex items-center gap-2 text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+                  <AlertTriangle className="w-4 h-4 shrink-0" />
+                  {pickerError}
+                </p>
+              )}
+              {pickerOpen && metaTemplates && (
+                <div className="rounded-lg border border-emerald-200 bg-white p-2 space-y-1.5">
+                  <div className="flex items-center justify-between px-1">
+                    <p className="text-xs font-semibold text-slate-700">قوالب حساب واتساب ({metaTemplates.length}) – اختر قالباً لاستخدامه</p>
+                    <button type="button" className="text-xs text-slate-500 hover:underline" onClick={() => setPickerOpen(false)}>
+                      إخفاء
+                    </button>
+                  </div>
+                  <div className="max-h-60 overflow-y-auto space-y-1.5">
+                    {metaTemplates.length === 0 && <p className="text-xs text-slate-500 px-1 py-2">لا توجد قوالب في حساب واتساب.</p>}
+                    {metaTemplates.map((m) => {
+                      const usable = templateValidity(m.status).usable && !m.hasMediaHeader
+                      return (
+                        <button
+                          key={`${m.name}-${m.language}`}
+                          type="button"
+                          disabled={!usable}
+                          onClick={() => pickMetaTemplate(m)}
+                          className="w-full text-right rounded-lg border border-slate-200 px-3 py-2 text-xs hover:border-emerald-400 hover:bg-emerald-50/40 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="font-mono font-semibold text-slate-800">{m.name}</span>
+                            {templateValidity(m.status).usable ? (
+                              <span className="rounded-full px-2 py-0.5 bg-emerald-100 text-emerald-700">معتمد · {m.language}</span>
+                            ) : (
+                              <TemplateStatusBadge status={m.status} />
+                            )}
+                          </div>
+                          <p className="text-slate-500 mt-1 line-clamp-2">{m.hasMediaHeader ? "قالب يحتوي على وسائط – غير مدعوم هنا" : m.body}</p>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
               {isMeta && (
                 <p className="text-xs text-emerald-700">
                   سيُرسل كقالب واتساب معتمد ({selected!.metaTemplateName})، ولذلك يمكن إرساله لأي رقم في أي وقت.
