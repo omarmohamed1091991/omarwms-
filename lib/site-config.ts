@@ -25,4 +25,5 @@ export const legalNav = [
   { href: "/privacy-policy", label: "سياسة الخصوصية", labelEn: "Privacy Policy" },
   { href: "/refund-policy", label: "سياسة الاسترجاع والإلغاء", labelEn: "Refund & Cancellation" },
   { href: "/terms", label: "الشروط والأحكام وسياسة التسليم", labelEn: "Terms & Digital Delivery" },
+  { href: "/data-deletion", label: "حذف البيانات", labelEn: "Data Deletion" },
 ]

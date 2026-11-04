@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import { ProfileSettingsForm } from "@/components/dashboard/profile-settings-form"
+import { DeleteAccountCard } from "@/components/dashboard/delete-account-card"
 
 export default async function ProfilePage() {
   const supabase = await createClient()
@@ -21,7 +22,9 @@ export default async function ProfilePage() {
         <p className="text-sm text-gray-600 mt-1">قم بتحديث معلومات حسابك الشخصية</p>
       </div>
 
-      <ProfileSettingsForm user={user} profile={profile} />
+      <ProfileSettingsForm userId={user.id} profile={profile} />
+
+      {profile?.role !== "admin" && <DeleteAccountCard />}
     </div>
   )
 }
