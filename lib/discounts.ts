@@ -1,6 +1,7 @@
-import { and, count, desc, eq, isNotNull } from "drizzle-orm"
+import { and, count, eq, isNotNull } from "drizzle-orm"
 import { db } from "@/db"
-import { discountCodes, paymobSessions, type DiscountCode } from "@/db/schema"
+import { paymobSessions, type DiscountCode } from "@/db/schema"
+import { selectDiscountByCode, selectDiscounts } from "@/lib/catalog"
 
 export function normalizeCode(code: unknown) {
   return String(code ?? "")
@@ -8,6 +9,8 @@ export function normalizeCode(code: unknown) {
     .toUpperCase()
     .replace(/\s+/g, "")
 }
+
+// أكواد الخصم محفوظة في Supabase، وعدد مرات الاستخدام يُحسب من جلسات الدفع في Netlify Database.
 
 /** عدد مرات الاستخدام الفعلية = عمليات الدفع الناجحة التي طُبق عليها الكود. */
 export async function discountUses(id: number) {
@@ -29,7 +32,7 @@ type Validation = { ok: true; discount: DiscountCode } | { ok: false; error: str
 export async function validateDiscountCode(raw: unknown): Promise<Validation> {
   const code = normalizeCode(raw)
   if (!code) return { ok: false, error: "أدخل كود الخصم" }
-  const [discount] = await db.select().from(discountCodes).where(eq(discountCodes.code, code)).limit(1)
+  const discount = await selectDiscountByCode(code)
   if (!discount) return { ok: false, error: "كود الخصم غير صحيح" }
   if (!discount.isActive) return { ok: false, error: "كود الخصم غير مفعّل حالياً" }
   if (discount.expiresAt && discount.expiresAt < new Date()) return { ok: false, error: "انتهت صلاحية كود الخصم" }
@@ -43,7 +46,7 @@ export async function validateDiscountCode(raw: unknown): Promise<Validation> {
 export async function listDiscountCodes() {
   try {
     const [codes, usage] = await Promise.all([
-      db.select().from(discountCodes).orderBy(desc(discountCodes.createdAt)),
+      selectDiscounts(),
       db
         .select({ id: paymobSessions.discountCodeId, n: count() })
         .from(paymobSessions)

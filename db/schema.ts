@@ -1,5 +1,6 @@
 import { pgTable, serial, text, timestamp, integer, boolean, jsonb, index } from "drizzle-orm/pg-core"
 
+// جدول قديم: خطط الأسعار أصبحت تُحفظ وتُقرأ من Supabase (lib/catalog.ts). يبقى هنا لعدم حذف بيانات سابقة.
 // خطط الأسعار التي يديرها الأدمن. المبالغ مخزنة بأصغر وحدة (قرش / هللة).
 export const pricingPlans = pgTable("pricing_plans", {
   id: serial().primaryKey(),
@@ -23,7 +24,7 @@ export const subscriptions = pgTable(
   {
     id: serial().primaryKey(),
     userId: text("user_id").notNull(),
-    planId: integer("plan_id").references(() => pricingPlans.id, { onDelete: "set null" }),
+    planId: integer("plan_id"), // معرّف الخطة في Supabase
     planName: text("plan_name").notNull(),
     currency: text().notNull(),
     amountCents: integer("amount_cents").notNull(),
@@ -60,6 +61,7 @@ export const payments = pgTable(
   (t) => [index("payments_user_id_idx").on(t.userId)],
 )
 
+// جدول قديم: أكواد الخصم أصبحت تُحفظ وتُقرأ من Supabase (lib/catalog.ts). يبقى هنا لعدم حذف بيانات سابقة.
 // أكواد الخصم التي ينشئها الأدمن. الكود الواحد يمكن أن يستخدمه أكثر من مستخدم.
 export const discountCodes = pgTable("discount_codes", {
   id: serial().primaryKey(),
@@ -80,7 +82,7 @@ export const paymobSessions = pgTable(
     id: serial().primaryKey(),
     reference: text().notNull().unique(), // special_reference المرسل إلى Paymob
     userId: text("user_id").notNull(),
-    planId: integer("plan_id").references(() => pricingPlans.id, { onDelete: "set null" }),
+    planId: integer("plan_id"), // معرّف الخطة في Supabase
     planName: text("plan_name").notNull(),
     currency: text().notNull(), // egp | sar
     amountCents: integer("amount_cents").notNull(),
@@ -90,7 +92,7 @@ export const paymobSessions = pgTable(
     paymobOrderId: text("paymob_order_id"),
     paymobTransactionId: text("paymob_transaction_id"),
     // كود الخصم المطبق (إن وُجد). amountCents هو المبلغ النهائي بعد الخصم.
-    discountCodeId: integer("discount_code_id").references(() => discountCodes.id, { onDelete: "set null" }),
+    discountCodeId: integer("discount_code_id"), // معرّف الكود في Supabase
     discountCode: text("discount_code"),
     discountPercent: integer("discount_percent"),
     originalAmountCents: integer("original_amount_cents"),

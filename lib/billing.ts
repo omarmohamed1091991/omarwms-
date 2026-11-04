@@ -1,6 +1,7 @@
-import { asc, desc, eq, inArray } from "drizzle-orm"
+import { desc, eq, inArray } from "drizzle-orm"
 import { db } from "@/db"
-import { payments, paymobSessions, pricingPlans, subscriptions, type PricingPlan, type Subscription } from "@/db/schema"
+import { payments, paymobSessions, subscriptions, type PricingPlan, type Subscription } from "@/db/schema"
+import { selectPlan, selectPlans } from "@/lib/catalog"
 
 export const CURRENCIES = {
   egp: { code: "egp", label: "جنيه مصري", symbol: "ج.م", short: "EGP" },
@@ -43,11 +44,10 @@ export function planPrice(plan: PricingPlan, currency: Currency) {
   return currency === "egp" ? plan.priceEgpCents : plan.priceSarCents
 }
 
+// خطط الأسعار تُقرأ من Supabase.
 export async function listPlans({ activeOnly = false } = {}) {
   try {
-    const query = db.select().from(pricingPlans)
-    const rows = activeOnly ? await query.where(eq(pricingPlans.isActive, true)).orderBy(asc(pricingPlans.sortOrder), asc(pricingPlans.id)) : await query.orderBy(asc(pricingPlans.sortOrder), asc(pricingPlans.id))
-    return rows
+    return await selectPlans(activeOnly)
   } catch (error) {
     console.error("[billing] Failed to load pricing plans:", error)
     return []
@@ -57,8 +57,7 @@ export async function listPlans({ activeOnly = false } = {}) {
 export async function getPlan(id: number) {
   if (!Number.isInteger(id)) return null
   try {
-    const [plan] = await db.select().from(pricingPlans).where(eq(pricingPlans.id, id))
-    return plan ?? null
+    return await selectPlan(id)
   } catch (error) {
     console.error("[billing] Failed to load plan:", error)
     return null
