@@ -1,10 +1,10 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import Link from "next/link"
-import Image from "next/image"
-import { usePathname, useRouter } from "next/navigation"
-import { cn } from "@/lib/utils"
+import { useState } from "react";
+import Link from "next/link";
+import Image from "next/image";
+import { usePathname, useRouter } from "next/navigation";
+import { cn } from "@/lib/utils";
 import {
   Settings,
   MessageSquare,
@@ -21,37 +21,82 @@ import {
   ShieldCheck,
   CalendarCheck,
   LayoutTemplate,
-} from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { createClient } from "@/lib/supabase/client"
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
+  UserCircle,
+  ChevronDown,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { createClient } from "@/lib/supabase/client";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface UserSidebarProps {
-  userId: string
-  userName: string
-  userPhone?: string
-  accountStatus: "active" | "paused" | "suspended"
-  isAdmin: boolean
+  userId: string;
+  userName: string;
+  userPhone?: string;
+  accountStatus: "active" | "paused" | "suspended";
+  isAdmin: boolean;
 }
 
-export function UserSidebar({ userId, userName, userPhone, accountStatus, isAdmin }: UserSidebarProps) {
-  const pathname = usePathname()
-  const router = useRouter()
-  const [isOpen, setIsOpen] = useState(false)
+export function UserSidebar({
+  userId,
+  userName,
+  userPhone,
+  accountStatus,
+  isAdmin,
+}: UserSidebarProps) {
+  const pathname = usePathname();
+  const router = useRouter();
+  const [isOpen, setIsOpen] = useState(false);
 
   const navGroups = [
     {
       title: "الرئيسية",
-      items: [{ href: `/users/${userId}`, label: "لوحة التحكم", icon: LayoutDashboard, exact: true }],
+      items: [
+        {
+          href: `/users/${userId}`,
+          label: "لوحة التحكم",
+          icon: LayoutDashboard,
+          exact: true,
+        },
+      ],
     },
     {
       title: "المراسلة",
       items: [
-        { href: `/users/${userId}/templates`, label: "إنشاء القوالب", icon: LayoutTemplate },
-        { href: `/users/${userId}/individual`, label: "رسائل فردية", icon: MessageSquare },
+        {
+          href: `/users/${userId}/templates`,
+          label: "إنشاء القوالب",
+          icon: LayoutTemplate,
+        },
+        {
+          href: `/users/${userId}/individual`,
+          label: "رسائل فردية",
+          icon: MessageSquare,
+        },
         { href: `/users/${userId}/bulk`, label: "رسائل جماعية", icon: Users },
-        { href: `/users/${userId}/free-messages`, label: "رسائل حرة", icon: MessageSquareText },
-        { href: `/users/${userId}/appointments`, label: "تأكيد المواعيد", icon: CalendarCheck },
+        {
+          href: `/users/${userId}/free-messages`,
+          label: "رسائل حرة",
+          icon: MessageSquareText,
+        },
+        {
+          href: `/users/${userId}/appointments`,
+          label: "تأكيد المواعيد",
+          icon: CalendarCheck,
+        },
         { href: `/users/${userId}/inbox`, label: "صندوق الوارد", icon: Inbox },
         { href: `/users/${userId}/media`, label: "مكتبة الصور", icon: Images },
       ],
@@ -59,20 +104,97 @@ export function UserSidebar({ userId, userName, userPhone, accountStatus, isAdmi
     {
       title: "الحساب",
       items: [
-        { href: `/users/${userId}/subscription`, label: "الاشتراك والفواتير", icon: CreditCard },
-        { href: `/users/${userId}/settings`, label: "الإعدادات", icon: Settings },
+        {
+          href: `/users/${userId}/profile`,
+          label: "الملف الشخصي",
+          icon: UserCircle,
+        },
+        {
+          href: `/users/${userId}/subscription`,
+          label: "الاشتراك والفواتير",
+          icon: CreditCard,
+        },
+        {
+          href: `/users/${userId}/settings`,
+          label: "الإعدادات",
+          icon: Settings,
+        },
       ],
     },
-  ]
+  ];
 
-  const statusLabel = accountStatus === "active" ? "نشط" : accountStatus === "paused" ? "موقوف مؤقتاً" : "غير نشط"
+  const statusLabel =
+    accountStatus === "active"
+      ? "نشط"
+      : accountStatus === "paused"
+        ? "موقوف مؤقتاً"
+        : "غير نشط";
 
   const handleLogout = async () => {
-    const supabase = createClient()
-    await supabase.auth.signOut()
-    router.push("/")
-    router.refresh()
-  }
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.push("/");
+    router.refresh();
+  };
+
+  const ProfileMenuContent = ({ onNavigate }: { onNavigate?: () => void }) => (
+    <DropdownMenuContent align="end" className="w-60">
+      <DropdownMenuLabel className="font-normal">
+        <div className="flex flex-col gap-1">
+          <p className="text-sm font-semibold leading-none truncate">
+            {userName}
+          </p>
+          {userPhone && (
+            <p
+              className="text-xs leading-none text-muted-foreground text-right"
+              dir="ltr"
+            >
+              {userPhone}
+            </p>
+          )}
+        </div>
+      </DropdownMenuLabel>
+      <DropdownMenuSeparator />
+      <DropdownMenuItem asChild>
+        <Link
+          href={`/users/${userId}/profile`}
+          onClick={onNavigate}
+          className="cursor-pointer gap-2"
+        >
+          <UserCircle className="h-4 w-4" />
+          <span>الملف الشخصي</span>
+        </Link>
+      </DropdownMenuItem>
+      <DropdownMenuItem asChild>
+        <Link
+          href={`/users/${userId}/settings`}
+          onClick={onNavigate}
+          className="cursor-pointer gap-2"
+        >
+          <Settings className="h-4 w-4" />
+          <span>الإعدادات</span>
+        </Link>
+      </DropdownMenuItem>
+      <DropdownMenuItem asChild>
+        <Link
+          href={`/users/${userId}/subscription`}
+          onClick={onNavigate}
+          className="cursor-pointer gap-2"
+        >
+          <CreditCard className="h-4 w-4" />
+          <span>الاشتراك والفواتير</span>
+        </Link>
+      </DropdownMenuItem>
+      <DropdownMenuSeparator />
+      <DropdownMenuItem
+        onSelect={handleLogout}
+        className="cursor-pointer gap-2 text-red-600 focus:text-red-600"
+      >
+        <LogOut className="h-4 w-4" />
+        <span>تسجيل الخروج</span>
+      </DropdownMenuItem>
+    </DropdownMenuContent>
+  );
 
   const NavContent = ({ isMobile = false }: { isMobile?: boolean }) => (
     <div className="flex flex-col h-full bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 text-slate-300">
@@ -80,43 +202,68 @@ export function UserSidebar({ userId, userName, userPhone, accountStatus, isAdmi
       <div className="px-5 h-20 flex items-center border-b border-white/5">
         <Link href="/users" className="flex items-center gap-3 group">
           <div className="w-11 h-11 rounded-xl bg-white/95 p-1.5 shadow-lg shadow-emerald-500/20 ring-1 ring-white/10 group-hover:shadow-emerald-500/40 transition-shadow">
-            <Image src="/logo.png" alt="o-wms Logo" width={40} height={40} className="object-contain w-full h-full" />
+            <Image
+              src="/logo.png"
+              alt="o-wms Logo"
+              width={40}
+              height={40}
+              className="object-contain w-full h-full"
+            />
           </div>
           <div className="flex flex-col leading-tight">
-            <span className="text-base font-bold text-white tracking-wide">o-wms</span>
-            <span className="text-[11px] text-emerald-400/80">نظام واتساب احترافي</span>
+            <span className="text-base font-bold text-white tracking-wide">
+              o-wms
+            </span>
+            <span className="text-[11px] text-emerald-400/80">
+              نظام واتساب احترافي
+            </span>
           </div>
         </Link>
       </div>
 
       {/* User Card */}
       <div className="px-4 pt-5">
-        <div className="flex items-center gap-3 rounded-2xl bg-white/5 ring-1 ring-white/10 p-3">
-          <div className="relative shrink-0">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-400 to-green-600 flex items-center justify-center text-white font-bold text-sm shadow-md shadow-emerald-900/40">
-              {userName?.charAt(0) || "U"}
-            </div>
-            <span
-              className={cn(
-                "absolute -bottom-0.5 -left-0.5 h-3 w-3 rounded-full ring-2 ring-slate-900",
-                accountStatus === "active"
-                  ? "bg-emerald-400"
-                  : accountStatus === "paused"
-                    ? "bg-amber-400"
-                    : "bg-red-500",
-              )}
-              aria-hidden="true"
-            />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-white truncate">{userName}</p>
-            {userPhone && (
-              <p className="text-xs text-slate-400 truncate text-right" dir="ltr">
-                {userPhone}
-              </p>
-            )}
-          </div>
-        </div>
+        <DropdownMenu dir="rtl">
+          <DropdownMenuTrigger asChild>
+            <button
+              type="button"
+              aria-label="فتح قائمة الملف الشخصي"
+              className="w-full text-right flex items-center gap-3 rounded-2xl bg-white/5 ring-1 ring-white/10 p-3 hover:bg-white/10 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 data-[state=open]:bg-white/10"
+            >
+              <div className="relative shrink-0">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-400 to-green-600 flex items-center justify-center text-white font-bold text-sm shadow-md shadow-emerald-900/40">
+                  {userName?.charAt(0) || "U"}
+                </div>
+                <span
+                  className={cn(
+                    "absolute -bottom-0.5 -left-0.5 h-3 w-3 rounded-full ring-2 ring-slate-900",
+                    accountStatus === "active"
+                      ? "bg-emerald-400"
+                      : accountStatus === "paused"
+                        ? "bg-amber-400"
+                        : "bg-red-500",
+                  )}
+                  aria-hidden="true"
+                />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-white truncate">
+                  {userName}
+                </p>
+                {userPhone && (
+                  <p
+                    className="text-xs text-slate-400 truncate text-right"
+                    dir="ltr"
+                  >
+                    {userPhone}
+                  </p>
+                )}
+              </div>
+              <ChevronDown className="w-4 h-4 text-slate-400 shrink-0" />
+            </button>
+          </DropdownMenuTrigger>
+          <ProfileMenuContent onNavigate={() => isMobile && setIsOpen(false)} />
+        </DropdownMenu>
         <div className="flex items-center gap-2 mt-2 px-1 text-[11px]">
           <span
             className={cn(
@@ -144,11 +291,16 @@ export function UserSidebar({ userId, userName, userPhone, accountStatus, isAdmi
       <nav className="flex-1 px-3 py-5 space-y-6 overflow-y-auto [scrollbar-width:thin]">
         {navGroups.map((group) => (
           <div key={group.title}>
-            <p className="px-3 mb-2 text-[11px] font-semibold uppercase tracking-wider text-slate-500">{group.title}</p>
+            <p className="px-3 mb-2 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+              {group.title}
+            </p>
             <div className="space-y-1">
               {group.items.map((item) => {
-                const Icon = item.icon
-                const isActive = "exact" in item && item.exact ? pathname === item.href : pathname.startsWith(item.href)
+                const Icon = item.icon;
+                const isActive =
+                  "exact" in item && item.exact
+                    ? pathname === item.href
+                    : pathname.startsWith(item.href);
 
                 return (
                   <Link
@@ -180,11 +332,13 @@ export function UserSidebar({ userId, userName, userPhone, accountStatus, isAdmi
                     <ChevronLeft
                       className={cn(
                         "w-4 h-4 transition-all",
-                        isActive ? "text-emerald-300" : "opacity-0 -translate-x-1 group-hover:opacity-60 group-hover:translate-x-0",
+                        isActive
+                          ? "text-emerald-300"
+                          : "opacity-0 -translate-x-1 group-hover:opacity-60 group-hover:translate-x-0",
                       )}
                     />
                   </Link>
-                )
+                );
               })}
             </div>
           </div>
@@ -213,7 +367,7 @@ export function UserSidebar({ userId, userName, userPhone, accountStatus, isAdmi
         </button>
       </div>
     </div>
-  )
+  );
 
   return (
     <>
@@ -227,12 +381,19 @@ export function UserSidebar({ userId, userName, userPhone, accountStatus, isAdmi
         <div className="flex items-center justify-between h-full px-4">
           <Sheet open={isOpen} onOpenChange={setIsOpen}>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="relative overflow-hidden group">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="relative overflow-hidden group"
+              >
                 <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 to-green-500/10 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg" />
                 <Menu className="h-5 w-5 relative z-10" />
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="w-72 p-0 border-0 bg-slate-900 [&>button]:text-white [&>button]:right-auto [&>button]:left-4 [&>button]:top-7">
+            <SheetContent
+              side="right"
+              className="w-72 p-0 border-0 bg-slate-900 [&>button]:text-white [&>button]:right-auto [&>button]:left-4 [&>button]:top-7"
+            >
               <SheetHeader className="sr-only">
                 <SheetTitle>القائمة</SheetTitle>
               </SheetHeader>
@@ -241,20 +402,35 @@ export function UserSidebar({ userId, userName, userPhone, accountStatus, isAdmi
           </Sheet>
 
           <Link href="/users" className="flex items-center gap-2">
-            <Image src="/logo.png" alt="o-wms Logo" width={36} height={36} className="object-contain" />
+            <Image
+              src="/logo.png"
+              alt="o-wms Logo"
+              width={36}
+              height={36}
+              className="object-contain"
+            />
             <span className="text-sm font-bold bg-gradient-to-r from-emerald-500 to-green-700 bg-clip-text text-transparent">
               o-wms
             </span>
           </Link>
 
-          <div className="w-10 h-10 rounded-full bg-gradient-to-r from-emerald-500 to-green-700 flex items-center justify-center text-white font-bold text-sm shadow-md">
-            {userName?.charAt(0) || "U"}
-          </div>
+          <DropdownMenu dir="rtl">
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                aria-label="فتح قائمة الملف الشخصي"
+                className="w-10 h-10 rounded-full bg-gradient-to-r from-emerald-500 to-green-700 flex items-center justify-center text-white font-bold text-sm shadow-md outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2"
+              >
+                {userName?.charAt(0) || "U"}
+              </button>
+            </DropdownMenuTrigger>
+            <ProfileMenuContent />
+          </DropdownMenu>
         </div>
       </header>
 
       {/* Spacer for mobile header only */}
       <div className="lg:hidden h-16" />
     </>
-  )
+  );
 }
