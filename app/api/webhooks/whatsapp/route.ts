@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { parseIncomingWhatsAppMessage } from "@/lib/whatsapp-messages"
+import { saveMessageEchoes } from "@/lib/whatsapp-echoes"
 
 export async function GET(request: NextRequest) {
   const supabase = createAdminClient()
@@ -122,6 +123,9 @@ export async function POST(request: NextRequest) {
               }
             }
           }
+
+          // صدى الرسائل المرسلة من تطبيق WhatsApp Business على الهاتف (smb_message_echoes)
+          await saveMessageEchoes(supabase, change, [userId])
         }
       }
     }
