@@ -1,5 +1,6 @@
 import { createAdminClient } from "@/lib/supabase/admin"
 import UserDashboardClient from "@/components/users/user-dashboard-client"
+import { getMessagingLimit } from "@/lib/messaging-limit"
 
 export const revalidate = 0
 
@@ -97,9 +98,32 @@ export default async function UserDashboard({ params }: { params: Promise<{ user
 
   const { data: profile } = await supabase
     .from("user_profiles")
-    .select("account_status, is_active, account_active_until, subscription_expires_at, subscription_price_cents")
+    .select(
+      "account_status, is_active, account_active_until, subscription_expires_at, subscription_price_cents, whatsapp_access_token, whatsapp_phone_number_id, whatsapp_business_account_id",
+    )
     .eq("id", userId)
     .single()
+
+  // حد الإرسال الفعلي من Meta (يتم الجلب على الخادم فقط حتى لا يصل رمز الوصول إلى المتصفح)
+  const messagingLimit = await getMessagingLimit({
+    accessToken: profile?.whatsapp_access_token || null,
+    phoneNumberId: profile?.whatsapp_phone_number_id ? String(profile.whatsapp_phone_number_id) : null,
+    wabaId: profile?.whatsapp_business_account_id ? String(profile.whatsapp_business_account_id) : null,
+  })
+
+  // تحتسب Meta الحد بعدد العملاء الفريدين الذين استلموا رسائل قوالب (محادثات يبدأها النشاط) خلال آخر 24 ساعة
+  const since24h = Date.now() - 24 * 60 * 60 * 1000
+  const uniqueRecipients24h = new Set(
+    individualMessages
+      .filter(
+        (m: any) =>
+          m.message_type === "template" &&
+          ["sent", "delivered", "read"].includes(m.status) &&
+          new Date(m.sent_at || m.created_at).getTime() >= since24h,
+      )
+      .map((m: any) => String(m.recipient_phone || "").replace(/\D/g, ""))
+      .filter(Boolean),
+  ).size
 
   return (
     <UserDashboardClient
@@ -108,6 +132,8 @@ export default async function UserDashboard({ params }: { params: Promise<{ user
       subscriptionExpiresAt={profile?.subscription_expires_at || null}
       subscriptionPriceCents={profile?.subscription_price_cents || 0}
       userId={userId}
+      messagingLimit={messagingLimit}
+      uniqueRecipients24h={uniqueRecipients24h}
       individualMessages={individualMessages || []}
       bulkMessages={bulkMessages || []}
       bulkRecipientsData={bulkRecipientsData || []}
