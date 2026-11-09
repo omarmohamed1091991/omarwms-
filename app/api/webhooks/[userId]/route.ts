@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { parseIncomingWhatsAppMessage } from "@/lib/whatsapp-messages"
+import { saveMessageEchoes } from "@/lib/whatsapp-echoes"
 
 // Webhook verification (GET request from Meta)
 export async function GET(request: NextRequest, { params }: { params: Promise<{ userId: string }> }) {
@@ -145,6 +146,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
               }
             }
           }
+
+          // صدى الرسائل المرسلة من تطبيق WhatsApp Business على الهاتف (smb_message_echoes)
+          await saveMessageEchoes(supabase, change, targetUserIds)
 
           if (change.value?.statuses) {
             for (const status of change.value.statuses) {
