@@ -26,6 +26,8 @@ import { cn } from "@/lib/utils"
 import type { DateRange } from "react-day-picker"
 import { DateRangePicker } from "@/components/ui/date-range-picker"
 
+const ACCEPTED_STATUSES = ["sent", "delivered", "read"]
+
 interface Message {
   id: string
   status: string
@@ -142,12 +144,15 @@ export default function UserDashboardClient({
   const getStats = (period: typeof selectedPeriod) => {
     const filteredIndividual = filterByPeriod(individualMessages, period)
     const filteredIncoming = filterByPeriod(incomingMessages, period)
-    const filteredBulk = filterBulkByPeriod(bulkRecipientsData, period)
+    // مستلمو الحملات بحالة "pending" هم مسودات لم تُرسل بعد، فلا تُحتسب كرسائل مرسلة
+    const filteredBulk = filterBulkByPeriod(bulkRecipientsData, period).filter(
+      (r: any) => (r.status || "pending") !== "pending",
+    )
 
     // حساب الرسائل الفردية
     const individualTotal = filteredIndividual.length
     const individualAccepted = filteredIndividual.filter((m) => {
-      if (m.status === "sent" || m.status === "delivered") {
+      if (ACCEPTED_STATUSES.includes(m.status)) {
         if (m.whatsapp_message_id) return true
         if (m.message_text) {
           try {
@@ -167,11 +172,7 @@ export default function UserDashboardClient({
     // حساب الرسائل الجماعية
     const bulkTotal = filteredBulk.length
     const bulkAccepted = filteredBulk.filter((r: any) => {
-      if (r.status === "sent" || r.status === "delivered") {
-        if (r.whatsapp_message_id) return true
-        return true
-      }
-      return false
+      return ACCEPTED_STATUSES.includes(r.status)
     }).length
     const bulkFailed = filteredBulk.filter((r: any) => r.status === "failed").length
     const bulkPending = bulkTotal - bulkAccepted - bulkFailed

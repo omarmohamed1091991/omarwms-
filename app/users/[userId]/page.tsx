@@ -83,15 +83,89 @@ async function fetchAllBulkRecipients(supabase: any, bulkMessageIds: string[]) {
   return allRecords
 }
 
+const digits = (value: unknown) => String(value || "").replace(/\D/g, "")
+
+function getWhatsAppMessageId(message: any): string | null {
+  if (message.whatsapp_message_id) return String(message.whatsapp_message_id)
+  if (typeof message.message_text === "string" && message.message_text.startsWith("{")) {
+    try {
+      const parsed = JSON.parse(message.message_text)
+      if (parsed?.whatsapp_message_id) return String(parsed.whatsapp_message_id)
+    } catch {
+      // نص عادي
+    }
+  }
+  return null
+}
+
+function outgoingInboxOnly(individualRecords: any[], inboxRecords: any[]) {
+  const knownIds = new Set(individualRecords.map(getWhatsAppMessageId).filter(Boolean))
+
+  // الرسائل الفردية بدون معرّف WhatsApp (مثل الإرسال الفردي) تُطابق بالرقم والوقت
+  const unmatched = new Map<string, number[]>()
+  for (const m of individualRecords) {
+    if (getWhatsAppMessageId(m)) continue
+    const phone = digits(m.recipient_phone)
+    const time = new Date(m.sent_at || m.created_at).getTime()
+    if (!phone || Number.isNaN(time)) continue
+    const list = unmatched.get(phone) || []
+    list.push(time)
+    unmatched.set(phone, list)
+  }
+
+  const MATCH_WINDOW_MS = 2 * 60 * 1000
+  const result: any[] = []
+
+  for (const m of inboxRecords) {
+    if (m.direction !== "outgoing") continue
+    const waId = m.whatsapp_message_id ? String(m.whatsapp_message_id) : null
+    if (waId && knownIds.has(waId)) continue
+
+    const phone = digits(m.sender_phone)
+    const time = new Date(m.received_at || m.created_at).getTime()
+    const candidates = unmatched.get(phone)
+    if (candidates) {
+      const index = candidates.findIndex((t) => Math.abs(t - time) <= MATCH_WINDOW_MS)
+      if (index !== -1) {
+        candidates.splice(index, 1)
+        continue
+      }
+    }
+
+    // تُحفظ هذه الرسائل فقط بعد قبول WhatsApp لها
+    result.push({
+      id: `inbox-${m.id}`,
+      recipient_phone: m.sender_phone,
+      message_text: m.message_text,
+      message_type: m.message_type === "template" ? "template" : "reply",
+      whatsapp_message_id: waId,
+      status: "sent",
+      sent_at: m.received_at || m.created_at,
+      created_at: m.received_at || m.created_at,
+    })
+  }
+
+  return result
+}
+
 export default async function UserDashboard({ params }: { params: Promise<{ userId: string }> }) {
   const { userId } = await params
   const supabase = createAdminClient()
 
-  const [individualMessages, bulkMessages, incomingMessages] = await Promise.all([
+  const [individualRecords, bulkMessages, inboxRecords] = await Promise.all([
     fetchAllRecords(supabase, "individual_messages", "user_id", userId, "created_at"),
     fetchAllRecords(supabase, "bulk_messages", "user_id", userId, "created_at"),
     fetchAllRecords(supabase, "incoming_messages", "user_id", userId, "received_at"),
   ])
+
+  // جدول incoming_messages يحفظ المحادثة كاملة: الرسائل الواردة من العملاء والرسائل الصادرة
+  // (الردود من صندوق الوارد، رسائل المواعيد، والرسائل المرسلة من تطبيق WhatsApp Business).
+  // إحصائيات "الواردة" تحتسب الرسائل الواردة فقط.
+  const incomingMessages = inboxRecords.filter((m: any) => (m.direction || "incoming") !== "outgoing")
+
+  // الرسائل الصادرة المسجلة في صندوق الوارد تُضاف إلى إحصائيات "المرسلة"،
+  // مع استبعاد ما هو مسجل أصلاً في individual_messages حتى لا تُحتسب الرسالة مرتين.
+  const individualMessages = [...individualRecords, ...outgoingInboxOnly(individualRecords, inboxRecords)]
 
   const bulkMessageIds = bulkMessages.map((m: any) => m.id) || []
   const bulkRecipientsData = await fetchAllBulkRecipients(supabase, bulkMessageIds)
