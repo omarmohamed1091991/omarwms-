@@ -64,7 +64,7 @@ export default function DashboardCharts({ individualMessages, incomingMessages }
       if (date >= startDate) {
         const dateKey = date.toLocaleDateString("ar-EG", { month: "short", day: "numeric" })
         const current = dataMap.get(dateKey) || { sent: 0, received: 0, failed: 0 }
-        if (msg.status === "sent") {
+        if (msg.status === "sent" || msg.status === "delivered" || msg.status === "read") {
           current.sent++
         } else if (msg.status === "failed") {
           current.failed++

@@ -61,6 +61,8 @@ export default async function AnalyticsPage() {
   const { data: allIncomingMessages } = await adminClient
     .from("incoming_messages")
     .select("id, user_id, is_read, received_at")
+    // الرسائل الواردة فقط: الردود والرسائل الصادرة المحفوظة في نفس الجدول لا تُحتسب كواردة
+    .or("direction.is.null,direction.neq.outgoing")
 
   // إنشاء خريطة لربط bulk_message_id بـ user_id
   const bulkMessageUserMap = new Map<string, string>()
