@@ -11,11 +11,17 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Loader2, LogIn, Mail, Lock, AlertCircle } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { GoogleSignInButton, AuthDivider } from "@/components/auth/google-sign-in-button"
 
-export function LoginForm({ next }: { next?: string }) {
+const OAUTH_ERRORS: Record<string, string> = {
+  oauth: "تعذر إكمال تسجيل الدخول عبر جوجل، حاول مرة أخرى",
+  profile: "تم التحقق من حساب جوجل لكن تعذر تجهيز حسابك، حاول مرة أخرى أو تواصل مع الدعم",
+}
+
+export function LoginForm({ next, oauthError }: { next?: string; oauthError?: string }) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(oauthError ? OAUTH_ERRORS[oauthError] || OAUTH_ERRORS.oauth : null)
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -78,6 +84,9 @@ export function LoginForm({ next }: { next?: string }) {
             <AlertDescription>{error}</AlertDescription>
           </Alert>
         )}
+
+        <GoogleSignInButton next={next} label="تسجيل الدخول باستخدام جوجل" />
+        <AuthDivider />
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">

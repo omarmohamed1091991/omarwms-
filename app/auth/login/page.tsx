@@ -3,8 +3,8 @@ import Image from "next/image"
 import Link from "next/link"
 import { safeNext } from "@/lib/utils"
 
-export default async function LoginPage({ searchParams }: { searchParams: Promise<{ next?: string }> }) {
-  const { next } = await searchParams
+export default async function LoginPage({ searchParams }: { searchParams: Promise<{ next?: string; error?: string }> }) {
+  const { next, error } = await searchParams
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-green-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
@@ -18,7 +18,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
           <p className="text-sm text-gray-600">نظام إدارة رسائل واتساب</p>
         </div>
 
-        <LoginForm next={safeNext(next)} />
+        <LoginForm next={safeNext(next)} oauthError={error} />
 
         <p className="text-center text-xs text-gray-500 mt-6">
           جميع الحقوق محفوظة © {new Date().getFullYear()} o-wms
