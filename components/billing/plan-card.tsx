@@ -1,7 +1,7 @@
 import Link from "next/link"
 import { Check } from "lucide-react"
 import type { PricingPlan } from "@/db/schema"
-import { INTERVALS, formatMoney, type Interval } from "@/lib/billing"
+import { INTERVALS, SAR_ENABLED, formatMoney, type Interval } from "@/lib/billing"
 
 export function PlanCard({
   plan,
@@ -39,9 +39,13 @@ export function PlanCard({
         <span className="text-3xl font-extrabold text-gray-900">{formatMoney(plan.priceEgpCents, "egp")}</span>
         <span className="text-xs text-gray-500"> / EGP {period}</span>
       </div>
-      <p className="text-sm text-emerald-700 font-medium mb-6">
-        ≈ {formatMoney(plan.priceSarCents, "sar")} / SAR {period}
-      </p>
+      {SAR_ENABLED ? (
+        <p className="text-sm text-emerald-700 font-medium mb-6">
+          ≈ {formatMoney(plan.priceSarCents, "sar")} / SAR {period}
+        </p>
+      ) : (
+        <div className="mb-6" />
+      )}
 
       <ul className="space-y-2 mb-6 flex-1">
         {plan.features.map((feature) => (

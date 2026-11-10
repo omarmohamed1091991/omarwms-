@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { listPlans } from "@/lib/billing"
+import { SAR_ENABLED, listPlans } from "@/lib/billing"
 import { PlanCard } from "@/components/billing/plan-card"
 
 export async function PricingSection() {
@@ -10,7 +10,10 @@ export async function PricingSection() {
       <div className="text-center mb-10">
         <h2 className="text-2xl font-bold text-gray-900 mb-2">باقات الأسعار</h2>
         <p className="text-sm text-gray-600">
-          جميع الأسعار بالجنيه المصري (ج.م) مع ما يعادلها بالريال السعودي (ر.س). الأسعار شاملة ويتجدد الاشتراك تلقائياً
+          {SAR_ENABLED
+            ? "جميع الأسعار بالجنيه المصري (ج.م) مع ما يعادلها بالريال السعودي (ر.س)."
+            : "جميع الأسعار بالجنيه المصري (ج.م)."}{" "}
+          الأسعار شاملة ويتجدد الاشتراك تلقائياً
           ويمكن إلغاؤه في أي وقت.
         </p>
       </div>

@@ -2,12 +2,22 @@ import { desc, eq, inArray } from "drizzle-orm"
 import { db } from "@/db"
 import { payments, paymobSessions, subscriptions, type PricingPlan, type Subscription } from "@/db/schema"
 import { selectPlan, selectPlans } from "@/lib/catalog"
+import { SAR_ENABLED } from "@/lib/currency-flags"
+
+export { SAR_ENABLED }
 
 export const CURRENCIES = {
   egp: { code: "egp", label: "جنيه مصري", symbol: "ج.م", short: "EGP" },
   sar: { code: "sar", label: "ريال سعودي", symbol: "ر.س", short: "SAR" },
 } as const
 export type Currency = keyof typeof CURRENCIES
+
+/** العملات المتاحة حالياً للعرض والدفع. */
+export const ENABLED_CURRENCIES: Currency[] = SAR_ENABLED ? ["egp", "sar"] : ["egp"]
+
+export function isCurrencyEnabled(currency: Currency) {
+  return (ENABLED_CURRENCIES as string[]).includes(currency)
+}
 
 export const INTERVALS = {
   month: { label: "شهرياً", noun: "شهر" },
