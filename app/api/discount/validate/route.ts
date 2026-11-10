@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { getSessionUser } from "@/lib/auth"
-import { formatMoney, getPlan } from "@/lib/billing"
+import { ENABLED_CURRENCIES, formatMoney, getPlan } from "@/lib/billing"
 import { applyDiscount, validateDiscountCode } from "@/lib/discounts"
 
 // معاينة كود الخصم في صفحة الدفع: يعيد نسبة الخصم والمبلغ النهائي لكل عملة.
@@ -17,7 +17,7 @@ export async function POST(request: Request) {
 
   const { code, percentOff } = check.discount
   const amounts = Object.fromEntries(
-    (["egp", "sar"] as const).map((c) => {
+    ENABLED_CURRENCIES.map((c) => {
       const original = c === "egp" ? plan.priceEgpCents : plan.priceSarCents
       const { discountCents, finalCents } = applyDiscount(original, percentOff)
       return [c, { discount: formatMoney(discountCents, c), final: formatMoney(finalCents, c), free: finalCents === 0 }]

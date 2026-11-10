@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 import Link from "next/link"
 import { LegalPage, ContactBlock } from "@/components/marketing/legal-page"
+import { SAR_ENABLED } from "@/lib/currency-flags"
 
 export const metadata: Metadata = {
   title: "الشروط والأحكام وسياسة التسليم الرقمي | Terms & Digital Delivery - o-wms",
@@ -53,7 +54,7 @@ export default function TermsPage() {
       <section>
         <h2>4. الأسعار والدفع</h2>
         <ul>
-          <li>تُعرض الأسعار بالجنيه المصري (ج.م) مع ما يعادلها بالريال السعودي (ر.س)، وهي موضحة في <Link href="/#pricing">قسم الأسعار</Link>.</li>
+          <li>تُعرض الأسعار بالجنيه المصري (ج.م){SAR_ENABLED && " مع ما يعادلها بالريال السعودي (ر.س)"}، وهي موضحة في <Link href="/#pricing">قسم الأسعار</Link>.</li>
           <li>يتم الدفع مسبقاً عبر بوابات دفع إلكترونية آمنة ومعتمدة.</li>
           <li>يُدفع الاشتراك لكل فترة (شهرية أو سنوية حسب الخطة) عبر Paymob، ولا يتجدد تلقائياً ولا يتم أي خصم تلقائي. يمكنك التجديد قبل انتهاء الفترة من صفحة «الاشتراك والفواتير» في لوحة التحكم، وتُضاف المدة الجديدة إلى نهاية الفترة الحالية.</li>
           <li>يحق لـ OWMS تعديل أسعار الخطط، ولا يسري أي تعديل على الاشتراكات القائمة إلا بعد إشعار المشترك مسبقاً.</li>

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { getSessionUser } from "@/lib/auth"
-import { CURRENCIES, getPlan, siteOrigin, type Currency } from "@/lib/billing"
+import { CURRENCIES, getPlan, isCurrencyEnabled, siteOrigin, type Currency } from "@/lib/billing"
 import { createPaymobCheckout } from "@/lib/paymob"
 import { normalizeCode, validateDiscountCode } from "@/lib/discounts"
 
@@ -10,6 +10,9 @@ export async function POST(request: Request) {
 
   const body = await request.json().catch(() => ({}))
   const currency = (body.currency in CURRENCIES ? body.currency : "egp") as Currency
+  if (!isCurrencyEnabled(currency)) {
+    return NextResponse.json({ error: `الدفع بـ${CURRENCIES[currency].label} غير متاح حالياً` }, { status: 400 })
+  }
   const plan = await getPlan(Number(body.planId))
   if (!plan || !plan.isActive) return NextResponse.json({ error: "الخطة غير متاحة" }, { status: 404 })
   if (!body.acceptedTerms) {

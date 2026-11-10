@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import Link from "next/link"
 import { Megaphone, Code2, MessageSquare, Briefcase } from "lucide-react"
 import { LegalPage, ContactBlock } from "@/components/marketing/legal-page"
+import { SAR_ENABLED } from "@/lib/currency-flags"
 
 export const metadata: Metadata = {
   title: "من نحن | About Us - o-wms",
@@ -67,7 +68,7 @@ export default function AboutPage() {
       <section>
         <h2>لماذا OWMS؟</h2>
         <ul>
-          <li>أسعار واضحة بالجنيه المصري والريال السعودي دون رسوم خفية.</li>
+          <li>{SAR_ENABLED ? "أسعار واضحة بالجنيه المصري والريال السعودي دون رسوم خفية." : "أسعار واضحة بالجنيه المصري دون رسوم خفية."}</li>
           <li>تسليم رقمي سريع وفق جداول زمنية محددة مسبقاً.</li>
           <li>دعم فني باللغة العربية عبر البريد الإلكتروني والهاتف وواتساب.</li>
           <li>حماية بيانات العملاء وعزل كامل بين الحسابات.</li>

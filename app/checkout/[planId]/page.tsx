@@ -6,7 +6,7 @@ import { PageShell } from "@/components/marketing/legal-page"
 import { CheckoutForm } from "@/components/billing/checkout-form"
 import { getSessionUser } from "@/lib/auth"
 import { isPaymobConfigured } from "@/lib/paymob"
-import { CURRENCIES, INTERVALS, isSubscriptionLive, formatMoney, getPlan, getUserSubscription, type Interval } from "@/lib/billing"
+import { CURRENCIES, ENABLED_CURRENCIES, INTERVALS, SAR_ENABLED, isSubscriptionLive, formatMoney, getPlan, getUserSubscription, type Interval } from "@/lib/billing"
 
 export const dynamic = "force-dynamic"
 export const metadata: Metadata = { title: "إتمام الاشتراك | o-wms" }
@@ -62,7 +62,7 @@ export default async function CheckoutPage({
                 {formatMoney(plan.priceEgpCents, "egp")}{" "}
                 <span className="text-sm font-normal text-gray-500">{interval.label}</span>
               </p>
-              <p className="text-sm text-emerald-700">≈ {formatMoney(plan.priceSarCents, "sar")}</p>
+              {SAR_ENABLED && <p className="text-sm text-emerald-700">≈ {formatMoney(plan.priceSarCents, "sar")}</p>}
             </div>
             <ul className="space-y-2">
               {plan.features.map((f) => (
@@ -119,7 +119,7 @@ export default async function CheckoutPage({
                 <CheckoutForm
                   planId={plan.id}
                   period={interval.label}
-                  options={(["egp", "sar"] as const).map((code) => ({
+                  options={ENABLED_CURRENCIES.map((code) => ({
                     code,
                     label: `${CURRENCIES[code].label} (${CURRENCIES[code].short})`,
                     amount: formatMoney(code === "egp" ? plan.priceEgpCents : plan.priceSarCents, code),
