@@ -12,6 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { AlertCircle, Loader2, UserPlus } from "lucide-react"
 import { registerUser } from "@/app/actions/register"
+import { GoogleSignInButton, AuthDivider } from "@/components/auth/google-sign-in-button"
 
 export function SignupForm({ next }: { next?: string }) {
   const router = useRouter()
@@ -77,6 +78,8 @@ export function SignupForm({ next }: { next?: string }) {
             <AlertDescription>{error}</AlertDescription>
           </Alert>
         )}
+        <GoogleSignInButton next={next} label="إنشاء حساب باستخدام جوجل" />
+        <AuthDivider />
         <form onSubmit={handleSubmit} className="space-y-4">
           {field("full_name", "الاسم الكامل")}
           {field("phone_number", "رقم الهاتف (واتساب)", "tel", true)}
