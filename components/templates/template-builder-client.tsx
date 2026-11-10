@@ -25,6 +25,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { cn } from "@/lib/utils"
+import { isImageFile, normalizeImageForUpload } from "@/lib/image-normalize"
 import { TemplateStatusBadge } from "@/components/templates/validity-alerts"
 import {
   CATEGORIES,
@@ -119,6 +120,8 @@ export function TemplateBuilderClient({ userId }: { userId: string }) {
   const [draft, setDraft] = useState<TemplateDraft>(emptyDraft)
   const [file, setFile] = useState<File | null>(null)
   const [filePreview, setFilePreview] = useState<string | null>(null)
+  const [preparingFile, setPreparingFile] = useState(false)
+  const [fileError, setFileError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
@@ -144,6 +147,23 @@ export function TemplateBuilderClient({ userId }: { userId: string }) {
     setFilePreview(url)
     return () => URL.revokeObjectURL(url)
   }, [file])
+
+  async function handleHeaderFile(picked: File | null) {
+    setFileError(null)
+    if (!picked || draft.headerFormat !== "IMAGE" || !isImageFile(picked)) {
+      setFile(picked)
+      return
+    }
+    setPreparingFile(true)
+    try {
+      setFile(await normalizeImageForUpload(picked))
+    } catch (err) {
+      setFile(null)
+      setFileError(err instanceof Error ? err.message : "تعذّر تجهيز الصورة")
+    } finally {
+      setPreparingFile(false)
+    }
+  }
 
   async function loadTemplates() {
     setLoadingList(true)
@@ -366,17 +386,24 @@ export function TemplateBuilderClient({ userId }: { userId: string }) {
               <div className="space-y-2">
                 <label className="flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-300 p-6 text-center cursor-pointer hover:border-emerald-400 hover:bg-emerald-50/40">
                   <Upload className="w-6 h-6 text-slate-400" />
-                  <span className="text-sm text-slate-700">{file ? file.name : "ارفع ملف مثال للمراجعة"}</span>
+                  <span className="text-sm text-slate-700">{preparingFile ? "جاري تجهيز الصورة..." : file ? file.name : "ارفع ملف مثال للمراجعة"}</span>
                   <span className="text-[11px] text-slate-500">
-                    {MEDIA_TYPES[draft.headerFormat as "IMAGE"].join("، ")} · حتى {(LIMITS.uploadBytes / 1024 / 1024).toFixed(1)} ميجابايت
+                    {draft.headerFormat === "IMAGE"
+                      ? "أي صيغة صورة وبأي مقاس · تُحوَّل إلى JPG وتُضغط تلقائياً"
+                      : `${MEDIA_TYPES[draft.headerFormat as "IMAGE"].join("، ")} · حتى ${(LIMITS.uploadBytes / 1024 / 1024).toFixed(1)} ميجابايت`}
                   </span>
                   <input
                     type="file"
                     className="hidden"
-                    accept={MEDIA_TYPES[draft.headerFormat as "IMAGE"].join(",")}
-                    onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+                    accept={draft.headerFormat === "IMAGE" ? "image/*,.heic,.heif" : MEDIA_TYPES[draft.headerFormat as "IMAGE"].join(",")}
+                    disabled={preparingFile}
+                    onChange={(e) => {
+                      void handleHeaderFile(e.target.files?.[0] ?? null)
+                      e.target.value = ""
+                    }}
                   />
                 </label>
+                {fileError && <p className="text-xs text-red-600">{fileError}</p>}
                 <p className="text-[11px] text-gray-500">
                   هذا الملف مثال تستخدمه Meta لمراجعة القالب فقط؛ عند الإرسال تختار الصورة الفعلية من مكتبة الصور.
                 </p>

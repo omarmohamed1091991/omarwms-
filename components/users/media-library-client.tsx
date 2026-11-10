@@ -8,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Upload, ImageIcon, Trash2, Check, CheckCircle2, XCircle } from "lucide-react"
 import { getMediaLibraryWithUrls, uploadMediaToWhatsApp, deleteMedia } from "@/app/users/[userId]/media/actions"
 import { getWhatsAppSettings } from "@/app/users/[userId]/settings/actions"
+import { isImageFile, normalizeImageForUpload } from "@/lib/image-normalize"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 
 interface MediaItem {
@@ -20,12 +21,16 @@ interface MediaItem {
   uploaded_at: string
 }
 
+// حد حجم الطلب عبر الموقع؛ الصور تُضغط تلقائياً تحته
+const VIDEO_MAX_BYTES = 4.5 * 1024 * 1024
+
 export default function MediaLibraryClient({ userId }: { userId: string }) {
   const [media, setMedia] = useState<MediaItem[]>([])
   const [loading, setLoading] = useState(true)
   const [uploading, setUploading] = useState(false)
   const [showUploadDialog, setShowUploadDialog] = useState(false)
   const [uploadStatus, setUploadStatus] = useState<"uploading" | "success" | "error">("uploading")
+  const [uploadError, setUploadError] = useState<string | null>(null)
   const [copiedId, setCopiedId] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -46,30 +51,47 @@ export default function MediaLibraryClient({ userId }: { userId: string }) {
   }
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
+    const picked = e.target.files?.[0]
+    if (!picked) return
 
-    const maxSize = 16 * 1024 * 1024
-    if (file.size > maxSize) {
-      alert("حجم الملف أكبر من 16 ميجابايت")
+    const fail = (message: string) => {
+      setUploadError(message)
+      setUploadStatus("error")
+      setTimeout(() => setShowUploadDialog(false), 3500)
+    }
+
+    const isImage = isImageFile(picked)
+    const videoTypes = ["video/mp4", "video/3gpp"]
+    if (!isImage && !videoTypes.includes(picked.type)) {
+      alert("نوع الملف غير مدعوم. يمكنك رفع أي صورة أو فيديو MP4 / 3GP")
+      if (fileInputRef.current) fileInputRef.current.value = ""
+      return
+    }
+    if (!isImage && picked.size > VIDEO_MAX_BYTES) {
+      alert(`حجم الفيديو أكبر من ${(VIDEO_MAX_BYTES / 1024 / 1024).toFixed(1)} ميجابايت`)
+      if (fileInputRef.current) fileInputRef.current.value = ""
       return
     }
 
-    const allowedTypes = ["image/jpeg", "image/png", "image/webp", "video/mp4", "video/3gpp"]
-    if (!allowedTypes.includes(file.type)) {
-      alert("نوع الملف غير مدعوم. الأنواع المدعومة: JPG, PNG, WebP, MP4, 3GP")
-      return
-    }
-
+    setUploadError(null)
     setShowUploadDialog(true)
     setUploadStatus("uploading")
     setUploading(true)
 
     try {
+      let file = picked
+      if (isImage) {
+        try {
+          file = await normalizeImageForUpload(picked)
+        } catch (err) {
+          fail(err instanceof Error ? err.message : "تعذّر تجهيز الصورة")
+          return
+        }
+      }
+
       const settings = await getWhatsAppSettings(userId)
       if (!settings?.whatsapp_phone_number_id || !settings?.whatsapp_access_token) {
-        setUploadStatus("error")
-        setTimeout(() => setShowUploadDialog(false), 2000)
+        fail("أكمل إعدادات WhatsApp أولاً (رقم الهاتف ورمز الوصول)")
         return
       }
 
@@ -87,13 +109,11 @@ export default function MediaLibraryClient({ userId }: { userId: string }) {
           loadMedia()
         }, 2000)
       } else {
-        setUploadStatus("error")
-        setTimeout(() => setShowUploadDialog(false), 2000)
+        fail(result.error || "فشل رفع الملف")
       }
     } catch (error) {
       console.error("[v0] Upload error:", error)
-      setUploadStatus("error")
-      setTimeout(() => setShowUploadDialog(false), 2000)
+      fail("حدث خطأ أثناء رفع الملف. حاول مرة أخرى.")
     } finally {
       setUploading(false)
       if (fileInputRef.current) {
@@ -136,7 +156,7 @@ export default function MediaLibraryClient({ userId }: { userId: string }) {
             <input
               ref={fileInputRef}
               type="file"
-              accept="image/jpeg,image/png,image/webp,video/mp4,video/3gpp"
+              accept="image/*,.heic,.heif,video/mp4,video/3gpp"
               onChange={handleFileSelect}
               className="hidden"
               disabled={uploading}
@@ -160,9 +180,9 @@ export default function MediaLibraryClient({ userId }: { userId: string }) {
               )}
             </Button>
             <p className="text-sm text-gray-500 text-center">
-              الصيغ المدعومة: JPG, PNG, WebP, MP4, 3GP
+              الصور: جميع الصيغ والمقاسات (JPG, PNG, WebP, HEIC, GIF, BMP…) وتُحوَّل وتُضغط تلقائياً
               <br />
-              الحد الأقصى: 16 ميجابايت
+              الفيديو: MP4, 3GP حتى {(VIDEO_MAX_BYTES / 1024 / 1024).toFixed(1)} ميجابايت
             </p>
           </div>
         </CardContent>
@@ -193,7 +213,7 @@ export default function MediaLibraryClient({ userId }: { userId: string }) {
             {uploadStatus === "error" && (
               <>
                 <XCircle className="w-16 h-16 text-red-500 mb-4" />
-                <p className="text-sm text-gray-600">حدث خطأ أثناء الرفع</p>
+                <p className="text-sm text-gray-600 text-center">{uploadError || "حدث خطأ أثناء الرفع"}</p>
               </>
             )}
           </div>
