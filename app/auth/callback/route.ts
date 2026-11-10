@@ -6,7 +6,7 @@ import { safeNext } from "@/lib/utils"
 export const dynamic = "force-dynamic"
 
 // مسار الـ Callback لتسجيل الدخول عبر جوجل (OAuth عبر Supabase):
-// يستبدل الكود بجلسة، ثم ينشئ ملف المستخدم إن كان البريد جديداً، ويحوّل إلى لوحة التحكم.
+// يستبدل الكود بجلسة، ثم ينشئ ملف المستخدم إن كان البريد جديداً، ويحوّل إلى الصفحة الرئيسية.
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = request.nextUrl
   const code = searchParams.get("code")
@@ -36,14 +36,16 @@ export async function GET(request: NextRequest) {
   const meta = (user.user_metadata || {}) as Record<string, string | undefined>
   const fullName = (meta.full_name || meta.name || email.split("@")[0] || "").trim()
 
-  let role: string | null = null
   try {
     const admin = createAdminClient()
-    const { data: profile } = await admin.from("user_profiles").select("id, role, email").eq("id", user.id).maybeSingle()
+    const { data: profile } = await admin.from("user_profiles").select("id, email").eq("id", user.id).maybeSingle()
 
     // البريد جديد: إنشاء ملف المستخدم بنفس إعدادات التسجيل العادي (الحساب مؤكد مباشرة من جوجل).
-    // ملاحظة: الـ trigger في Supabase قد يُنشئ صفاً فارغاً (بدون بريد أو دور)، فنعامله كحساب جديد.
-    if (!profile || (!profile.role && !profile.email)) {
+    // ملاحظة: الـ trigger في Supabase يُنشئ صفاً بدون بريد (والدور يأخذ القيمة الافتراضية "user")،
+    // لذا أي صف بدون بريد يُعامل كحساب جديد ويُضبط غير نشط افتراضياً.
+    // نتحقق أيضاً أن حساب المصادقة أُنشئ للتو حتى لا نعيد ضبط حسابات قديمة ينقصها البريد في الملف.
+    const justCreated = Date.now() - new Date(user.created_at).getTime() < 10 * 60 * 1000
+    if (!profile || (!profile.email && justCreated)) {
       const { error: profileError } = await admin.from("user_profiles").upsert(
         {
           id: user.id,
@@ -66,9 +68,6 @@ export async function GET(request: NextRequest) {
         .from("user_settings")
         .upsert({ user_id: user.id, notification_email: email }, { onConflict: "user_id", ignoreDuplicates: true })
       if (settingsError) console.error("[auth/callback] Settings error:", settingsError)
-      role = "user"
-    } else {
-      role = profile.role
     }
   } catch (err) {
     console.error("[auth/callback] Unexpected error:", err)
@@ -76,6 +75,6 @@ export async function GET(request: NextRequest) {
     return fail("profile")
   }
 
-  const destination = next || (role === "admin" ? "/users" : `/users/${user.id}`)
-  return NextResponse.redirect(new URL(destination, origin))
+  // بعد نجاح الدخول عبر جوجل يُحوَّل المستخدم إلى الصفحة الرئيسية (أو إلى الصفحة المحمية التي جاء منها).
+  return NextResponse.redirect(new URL(next || "/", origin))
 }
