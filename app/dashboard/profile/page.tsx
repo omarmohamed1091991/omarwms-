@@ -2,6 +2,8 @@ import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import { ProfileSettingsForm } from "@/components/dashboard/profile-settings-form"
 import { DeleteAccountCard } from "@/components/dashboard/delete-account-card"
+import { GoogleLinkCard } from "@/components/dashboard/google-link-card"
+import { Suspense } from "react"
 
 export default async function ProfilePage() {
   const supabase = await createClient()
@@ -23,6 +25,10 @@ export default async function ProfilePage() {
       </div>
 
       <ProfileSettingsForm userId={user.id} profile={profile} />
+
+      <Suspense fallback={null}>
+        <GoogleLinkCard />
+      </Suspense>
 
       {profile?.role !== "admin" && <DeleteAccountCard />}
     </div>

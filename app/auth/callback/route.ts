@@ -18,18 +18,36 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
+  // ربط حساب جوجل من صفحة الملف الشخصي: النتيجة تُعاد إلى نفس الصفحة بدلاً من صفحة الدخول.
+  const isLink = searchParams.get("link") === "google"
+  const linkResult = (status: string) => {
+    const url = new URL(next || "/dashboard/profile", origin)
+    url.searchParams.set("google_link", status)
+    return NextResponse.redirect(url)
+  }
+
   if (searchParams.get("error")) {
-    console.error("[auth/callback] Provider error:", searchParams.get("error_description") || searchParams.get("error"))
+    const detail = `${searchParams.get("error_code") || ""} ${searchParams.get("error_description") || searchParams.get("error")}`
+    console.error("[auth/callback] Provider error:", detail)
+    if (isLink) {
+      const d = detail.toLowerCase()
+      if (d.includes("identity_already_exists") || d.includes("already linked")) return linkResult("exists")
+      if (d.includes("manual_linking") || d.includes("manual linking")) return linkResult("disabled")
+      return linkResult("failed")
+    }
     return fail("oauth")
   }
-  if (!code) return fail("oauth")
+  if (!code) return isLink ? linkResult("failed") : fail("oauth")
 
   const supabase = await createClient()
   const { data, error } = await supabase.auth.exchangeCodeForSession(code)
   if (error || !data.user) {
     console.error("[auth/callback] Code exchange failed:", error?.message)
-    return fail("oauth")
+    return isLink ? linkResult("failed") : fail("oauth")
   }
+
+  // في حالة الربط الحساب موجود مسبقاً، فلا نغيّر ملف المستخدم أو حالته.
+  if (isLink) return linkResult("success")
 
   const user = data.user
   const email = user.email?.trim().toLowerCase() || ""

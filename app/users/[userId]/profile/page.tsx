@@ -2,6 +2,8 @@ import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import { ProfileSettingsForm } from "@/components/dashboard/profile-settings-form"
 import { DeleteAccountCard } from "@/components/dashboard/delete-account-card"
+import { GoogleLinkCard } from "@/components/dashboard/google-link-card"
+import { Suspense } from "react"
 
 export default async function UserProfilePage({ params }: { params: Promise<{ userId: string }> }) {
   const { userId } = await params
@@ -39,6 +41,12 @@ export default async function UserProfilePage({ params }: { params: Promise<{ us
       </div>
 
       <ProfileSettingsForm userId={userId} profile={profile} isAdmin={currentUserProfile?.role === "admin"} />
+
+      {user.id === userId && (
+        <Suspense fallback={null}>
+          <GoogleLinkCard />
+        </Suspense>
+      )}
 
       {user.id === userId && currentUserProfile?.role !== "admin" && <DeleteAccountCard />}
     </div>
