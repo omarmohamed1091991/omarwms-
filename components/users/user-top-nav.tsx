@@ -1,4 +1,5 @@
 "use client"
+import { LanguageSwitcher } from "@/components/i18n/language-switcher"
 
 import Link from "next/link"
 import { ChevronDown, Home, Tag, Info, Phone, ShieldCheck } from "lucide-react"
@@ -52,6 +53,7 @@ export function UserTopNav() {
             ))}
           </DropdownMenuContent>
         </DropdownMenu>
+        <LanguageSwitcher className="ms-auto h-8" />
       </nav>
     </div>
   )

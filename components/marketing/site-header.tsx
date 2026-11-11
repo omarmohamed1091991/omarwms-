@@ -3,6 +3,7 @@ import Image from "next/image"
 import { LogIn, LogOut, UserPlus, LayoutDashboard, Menu, ChevronDown } from "lucide-react"
 import { createClient } from "@/lib/supabase/server"
 import { mainNav, legalNav } from "@/lib/site-config"
+import { LanguageSwitcher } from "@/components/i18n/language-switcher"
 
 async function getCurrentUser() {
   try {
@@ -107,7 +108,12 @@ export async function SiteHeader() {
             </details>
           </nav>
 
-          <div className="hidden lg:flex items-center gap-2">{authActions}</div>
+          <div className="hidden lg:flex items-center gap-2">
+            <LanguageSwitcher />
+            {authActions}
+          </div>
+
+          <LanguageSwitcher className="lg:hidden ms-auto" />
 
           <details className="lg:hidden relative group">
             <summary

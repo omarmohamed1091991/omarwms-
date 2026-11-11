@@ -1,4 +1,5 @@
 "use client"
+import { LanguageSwitcher } from "@/components/i18n/language-switcher"
 
 import type { User } from "@supabase/supabase-js"
 import type { UserProfile } from "@/lib/types"
@@ -51,6 +52,8 @@ export function DashboardHeader({ user, profile }: DashboardHeaderProps) {
           </div>
         </div>
 
+        <div className="flex items-center gap-2">
+        <LanguageSwitcher />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="gap-2 px-2 sm:px-4">
@@ -70,6 +73,7 @@ export function DashboardHeader({ user, profile }: DashboardHeaderProps) {
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+        </div>
       </div>
     </header>
   )

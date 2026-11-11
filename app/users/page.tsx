@@ -1,5 +1,6 @@
 import { getAllUsers } from "@/lib/supabase/server"
 import Link from "next/link"
+import { LanguageSwitcher } from "@/components/i18n/language-switcher"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
@@ -65,6 +66,7 @@ export default async function UsersPage() {
               </div>
             </Link>
             <div className="flex items-center gap-3">
+              <LanguageSwitcher />
               <Link href="/">
                 <Button variant="outline" size="sm" className="gap-2 text-xs h-9 rounded-xl bg-transparent">
                   <ArrowRight className="w-4 h-4" />
