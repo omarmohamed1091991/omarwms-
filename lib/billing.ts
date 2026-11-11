@@ -102,6 +102,35 @@ export async function getUserPayments(userId: string) {
   return rows.map((r) => ({ ...r.payment, orderId: r.orderId, reference: r.reference, interval: r.interval }))
 }
 
+/** جميع الفواتير (المدفوعات) لكل العملاء — للأدمن فقط. */
+export async function getAllPayments(limit = 1000) {
+  try {
+    const rows = await db
+      .select({
+        ...paymentWithOrder,
+        discountCode: paymobSessions.discountCode,
+        discountPercent: paymobSessions.discountPercent,
+        originalAmountCents: paymobSessions.originalAmountCents,
+      })
+      .from(payments)
+      .leftJoin(paymobSessions, eq(paymobSessions.paymobTransactionId, payments.paymobTransactionId))
+      .orderBy(desc(payments.paidAt))
+      .limit(limit)
+    return rows.map((r) => ({
+      ...r.payment,
+      orderId: r.orderId,
+      reference: r.reference,
+      interval: r.interval,
+      discountCode: r.discountCode,
+      discountPercent: r.discountPercent,
+      originalAmountCents: r.originalAmountCents,
+    }))
+  } catch (error) {
+    console.error("[billing] Failed to load payments:", error)
+    return []
+  }
+}
+
 export async function getPaymentWithOrder(paymentId: number) {
   if (!Number.isInteger(paymentId)) return null
   const [row] = await db
