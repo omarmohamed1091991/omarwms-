@@ -3,12 +3,16 @@ import type { Metadata } from "next"
 import { Geist, Geist_Mono, Tajawal } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import "./globals.css"
+import "./i18n-ltr.css"
 import { IdleSessionTimeout } from "@/components/auth/idle-session-timeout"
+import { LanguageProvider } from "@/components/i18n/language-provider"
+import { FloatingLanguageSwitcher } from "@/components/i18n/language-switcher"
+import { LANG_BOOTSTRAP_SCRIPT } from "@/lib/i18n/config"
 
 const _geist = Geist({ subsets: ["latin"] })
 const _geistMono = Geist_Mono({ subsets: ["latin"] })
 const tajawal = Tajawal({
-  subsets: ["arabic"],
+  subsets: ["arabic", "latin"],
   weight: ["300", "400", "500", "700", "800"],
 })
 
@@ -31,10 +35,15 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="ar" dir="rtl" className="bg-background">
+    <html lang="ar" dir="rtl" className="bg-background" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: LANG_BOOTSTRAP_SCRIPT }} />
+      </head>
       <body className={`${tajawal.className} antialiased`}>
+        <LanguageProvider />
         <IdleSessionTimeout />
         {children}
+        <FloatingLanguageSwitcher />
         <Analytics />
       </body>
     </html>
