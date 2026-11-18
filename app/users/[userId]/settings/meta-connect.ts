@@ -258,6 +258,7 @@ export async function verifySavedWhatsAppConnection(userId: string) {
       .from("user_profiles")
       .update({ whatsapp_connection_status: ok ? "connected" : "disconnected", updated_at: new Date().toISOString() })
       .eq("id", userId)
+    revalidatePath(`/users/${userId}`, "layout")
     if (!ok) {
       return {
         success: false as const,
