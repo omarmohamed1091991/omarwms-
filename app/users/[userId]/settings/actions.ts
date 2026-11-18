@@ -1,5 +1,6 @@
 "use server"
 
+import { revalidatePath } from "next/cache"
 import { createAdminClient } from "@/lib/supabase/admin"
 
 function cleanAccessToken(token: string): string {
@@ -51,6 +52,8 @@ export async function saveWhatsAppSettings(
     }
 
     console.log("[v0] Settings saved successfully to database")
+    // تحديث رقم واتساب المعروض أسفل اسم المستخدم
+    revalidatePath(`/users/${userId}`, "layout")
     return { success: true, data }
   } catch (error: any) {
     console.error("[v0] Error in saveWhatsAppSettings:", error)
