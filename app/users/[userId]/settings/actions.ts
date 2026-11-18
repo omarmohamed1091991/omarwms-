@@ -78,7 +78,6 @@ export async function getWhatsAppSettings(userId: string) {
     if (data?.whatsapp_access_token) {
       const cleaned = cleanAccessToken(data.whatsapp_access_token)
       console.log("[v0] Loaded token length:", cleaned.length)
-      console.log("[v0] Loaded token last 30:", cleaned.slice(-30))
       data.whatsapp_access_token = cleaned
     }
 
