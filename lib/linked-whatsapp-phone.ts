@@ -16,9 +16,18 @@ export async function getLinkedWhatsAppPhone(profile: {
   whatsapp_access_token?: string | null
   whatsapp_connection_status?: string | null
 }): Promise<string | null> {
+  // لا نشترط حالة "متصل": الحفظ اليدوي يضبط الحالة "غير متصل" حتى يتم الاختبار،
+  // والتحقق الفعلي يتم عبر Meta (إذا كانت البيانات غير صالحة لن يظهر رقم).
+  return fetchLinkedPhone(profile)
+}
+
+async function fetchLinkedPhone(profile: {
+  whatsapp_phone_number_id?: string | null
+  whatsapp_access_token?: string | null
+}): Promise<string | null> {
   const phoneNumberId = String(profile.whatsapp_phone_number_id || "").trim()
   const token = cleanToken(profile.whatsapp_access_token || "")
-  if (!phoneNumberId || !token || profile.whatsapp_connection_status !== "connected") return null
+  if (!phoneNumberId || !token) return null
 
   const tokenHash = createHash("sha256").update(token).digest("hex").slice(0, 16)
 

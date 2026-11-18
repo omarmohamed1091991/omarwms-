@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
@@ -38,6 +39,7 @@ export function WhatsAppSettingsForm({
   settings?: any
   meta?: { appId: string; configId: string; enabled: boolean }
 }) {
+  const router = useRouter()
   const [formData, setFormData] = useState({
     whatsapp_access_token: "",
     whatsapp_business_account_id: "",
@@ -223,6 +225,8 @@ export function WhatsAppSettingsForm({
       })
 
       if (result.success) {
+        // تحديث الشريط الجانبي ليظهر رقم واتساب المربوط أسفل اسم المستخدم
+        router.refresh()
         setFormData((prev) => ({
           ...prev,
           whatsapp_access_token: cleanToken,
@@ -293,6 +297,7 @@ export function WhatsAppSettingsForm({
           await loadSettings()
           // تأكيد الاتصال بالقيم الجديدة المحفوظة على الخادم
           const check = await verifySavedWhatsAppConnection(userId)
+          router.refresh()
           if (check.success) {
             setConnectionStatus("success")
             setStatusMessage(
