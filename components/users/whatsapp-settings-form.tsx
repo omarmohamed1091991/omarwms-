@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge"
 import { CheckCircle2, XCircle, Copy, RefreshCw, Globe, Phone, AlertTriangle } from "lucide-react"
 import { saveWhatsAppSettings, getWhatsAppSettings } from "@/app/users/[userId]/settings/actions"
 import { MetaConnectButton } from "@/components/users/meta-connect-button"
+import { verifySavedWhatsAppConnection } from "@/app/users/[userId]/settings/meta-connect"
 
 function cleanAccessToken(token: string): string {
   if (!token) return ""
@@ -105,6 +106,9 @@ export function WhatsAppSettingsForm({
       if (settings.whatsapp_connection_status === "connected") {
         setConnectionStatus("success")
         setStatusMessage("متصل")
+      } else {
+        setConnectionStatus("idle")
+        setStatusMessage("")
       }
     } else {
       setFormData((prev) => ({
@@ -127,8 +131,6 @@ export function WhatsAppSettingsForm({
 
       console.log("[v0] Testing connection with cleaned token")
       console.log("[v0] Token length:", cleanToken.length)
-      console.log("[v0] Token first 30:", cleanToken.substring(0, 30))
-      console.log("[v0] Token last 30:", cleanToken.slice(-30))
       console.log("[v0] Token contains space:", cleanToken.includes(" "))
       console.log("[v0] Token contains plus:", cleanToken.includes("+"))
 
@@ -142,10 +144,15 @@ export function WhatsAppSettingsForm({
       console.log("[v0] Connection test response:", data)
 
       if (response.ok && data.id) {
-        setConnectionStatus("success")
-        setStatusMessage("تم الاتصال بنجاح! ✓")
-
-        await saveSettings()
+        // حفظ القيم التي نجح اختبارها كحالة "متصل"
+        const saved = await saveSettings("connected", true)
+        if (saved) {
+          setConnectionStatus("success")
+          setStatusMessage("تم الاتصال بنجاح وحفظ الإعدادات! ✓")
+        } else {
+          setConnectionStatus("error")
+          setStatusMessage("نجح الاتصال لكن فشل حفظ الإعدادات، أعد المحاولة")
+        }
       } else {
         setConnectionStatus("error")
 
@@ -193,10 +200,10 @@ export function WhatsAppSettingsForm({
     )
   }
 
-  const saveSettings = async () => {
+  const saveSettings = async (status: "connected" | "disconnected" = "disconnected", silent = false) => {
     if (!hasRequiredData()) {
       alert("يرجى إدخال جميع البيانات المطلوبة")
-      return
+      return false
     }
 
     setIsSaving(true)
@@ -205,7 +212,6 @@ export function WhatsAppSettingsForm({
 
       console.log("[v0] Saving new settings - deleting old data...")
       console.log("[v0] Cleaned token length:", cleanToken.length)
-      console.log("[v0] Cleaned token last 30:", cleanToken.slice(-30))
       console.log("[v0] Token contains space:", cleanToken.includes(" "))
 
       const result = await saveWhatsAppSettings(userId, {
@@ -213,7 +219,7 @@ export function WhatsAppSettingsForm({
         whatsapp_business_account_id: formData.whatsapp_business_account_id.trim(),
         whatsapp_phone_number_id: formData.whatsapp_phone_number_id.trim(),
         whatsapp_webhook_verify_token: formData.whatsapp_webhook_verify_token,
-        whatsapp_connection_status: "disconnected",
+        whatsapp_connection_status: status,
       })
 
       if (result.success) {
@@ -221,16 +227,19 @@ export function WhatsAppSettingsForm({
           ...prev,
           whatsapp_access_token: cleanToken,
         }))
-        setConnectionStatus("idle")
-        setStatusMessage("")
-        console.log("[v0] New settings saved successfully, old data replaced")
-        alert("تم حفظ الإعدادات الجديدة بنجاح! ✓\nيمكنك الآن اختبار الاتصال.")
+        if (!silent) {
+          setConnectionStatus("idle")
+          setStatusMessage("")
+          alert("تم حفظ الإعدادات الجديدة بنجاح! ✓\nيمكنك الآن اختبار الاتصال.")
+        }
+        return true
       } else {
         throw new Error(result.error || "فشل حفظ الإعدادات")
       }
     } catch (error) {
       console.error("[v0] Error saving settings:", error)
-      alert("فشل حفظ الإعدادات: " + (error as Error).message)
+      if (!silent) alert("فشل حفظ الإعدادات: " + (error as Error).message)
+      return false
     } finally {
       setIsSaving(false)
     }
@@ -243,7 +252,6 @@ export function WhatsAppSettingsForm({
 
       const cleanToken = cleanAccessToken(formData.whatsapp_access_token)
       console.log("[v0] Token length:", cleanToken.length)
-      console.log("[v0] Token last 30:", cleanToken.slice(-30))
       console.log("[v0] Token contains space:", cleanToken.includes(" "))
 
       const response = await fetch(
@@ -280,7 +288,21 @@ export function WhatsAppSettingsForm({
         appId={meta?.appId || ""}
         configId={meta?.configId || ""}
         enabled={Boolean(meta?.enabled)}
-        onConnected={() => loadSettings()}
+        onConnected={async () => {
+          setTemplates([])
+          await loadSettings()
+          // تأكيد الاتصال بالقيم الجديدة المحفوظة على الخادم
+          const check = await verifySavedWhatsAppConnection(userId)
+          if (check.success) {
+            setConnectionStatus("success")
+            setStatusMessage(
+              "متصل ✓" + (check.displayPhone ? ` — ${check.verifiedName ? check.verifiedName + " " : ""}${check.displayPhone}` : ""),
+            )
+          } else {
+            setConnectionStatus("error")
+            setStatusMessage(check.error)
+          }
+        }}
       />
 
       <Card className="border-2 border-blue-500 shadow-lg">
@@ -602,7 +624,7 @@ export function WhatsAppSettingsForm({
             </Button>
 
             <Button
-              onClick={saveSettings}
+              onClick={() => saveSettings()}
               disabled={isSaving || !hasRequiredData()}
               variant="default"
               className="flex-1 min-w-[120px] bg-green-600 hover:bg-green-700"

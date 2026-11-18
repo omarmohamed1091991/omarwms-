@@ -67,6 +67,8 @@ export function MetaConnectButton({
     wabaId: string
     phoneNumberId: string
     displayPhone: string
+    verifiedName: string
+    wabaName: string
     pin: string | null
     webhookSubscribed: boolean
     webhookOverride: boolean
@@ -105,7 +107,7 @@ export function MetaConnectButton({
     setStatus("saving")
     setMessage("جاري حفظ بيانات الربط وتفعيل الـ Webhook...")
     // ننتظر قليلاً لوصول بيانات الجلسة إن لم تصل بعد
-    for (let i = 0; i < 10 && !sessionInfo.current.wabaId; i++) {
+    for (let i = 0; i < 25 && !sessionInfo.current.wabaId; i++) {
       await new Promise((r) => setTimeout(r, 200))
     }
     const result = await completeMetaEmbeddedSignup(userId, {
@@ -114,16 +116,19 @@ export function MetaConnectButton({
       phoneNumberId: sessionInfo.current.phoneNumberId,
     })
     if (!result.success) {
+      sessionInfo.current = {}
       setStatus("error")
       setMessage(result.error)
       return
     }
     setStatus("success")
-    setMessage("تم ربط واتساب بحسابك بنجاح ✓")
+    setMessage("تم ربط واتساب بحسابك واختبار الاتصال وحفظ البيانات الجديدة بنجاح ✓")
     setDetails({
       wabaId: result.wabaId,
       phoneNumberId: result.phoneNumberId,
       displayPhone: result.displayPhone,
+      verifiedName: result.verifiedName,
+      wabaName: result.wabaName,
       pin: result.pin,
       webhookSubscribed: result.webhookSubscribed,
       webhookOverride: result.webhookOverride,
@@ -235,6 +240,8 @@ export function MetaConnectButton({
             {details.displayPhone && (
               <Row label="رقم الواتساب" value={details.displayPhone} />
             )}
+            {details.verifiedName && <Row label="الاسم المعروض" value={details.verifiedName} />}
+            {details.wabaName && <Row label="حساب واتساب للأعمال" value={details.wabaName} />}
             <Row label="معرّف حساب واتساب (WABA ID)" value={details.wabaId} />
             <Row label="معرّف رقم الهاتف (Phone Number ID)" value={details.phoneNumberId} />
             <Row label="رمز الوصول (Access Token)" value="محفوظ بأمان على الخادم ✓" />
@@ -250,7 +257,7 @@ export function MetaConnectButton({
             />
             <Row
               label="تسجيل الرقم في Cloud API"
-              value={details.registered ? "تم ✓" : "مسجّل مسبقاً أو يحتاج تسجيلاً يدوياً"}
+              value={details.registered ? "تم ✓" : "يحتاج تسجيلاً يدوياً"}
             />
             {details.pin && (
               <div className="mt-3 rounded-md bg-amber-50 border border-amber-200 p-3 text-amber-900 text-xs">
